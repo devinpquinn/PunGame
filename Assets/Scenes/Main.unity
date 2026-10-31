@@ -816,7 +816,7 @@ GameObject:
   - component: {fileID: 574250879}
   - component: {fileID: 574250878}
   m_Layer: 5
-  m_Name: Text_FG
+  m_Name: Text_Emphasized
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1492,7 +1492,7 @@ GameObject:
   - component: {fileID: 1533115802}
   - component: {fileID: 1533115801}
   m_Layer: 5
-  m_Name: Text_MG
+  m_Name: Text_Inlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1683,8 +1683,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4289046182
-  m_fontColor: {r: 0.6509804, g: 0.6509804, b: 0.64705884, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
