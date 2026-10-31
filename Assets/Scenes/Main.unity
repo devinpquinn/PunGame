@@ -315,8 +315,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: to shorten a piece of writing
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: eebb569c7a5ae994da9d3200b227b83c, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: eebb569c7a5ae994da9d3200b227b83c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
