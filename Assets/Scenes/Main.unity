@@ -178,8 +178,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: a loose pile of broken fragments
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -315,8 +315,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: to shorten a piece of writing
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -452,8 +452,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: plainly observable
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -589,8 +589,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: soviet canine cosmonaut
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1163,8 +1163,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: female human offspring
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1300,8 +1300,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: bear, fox, or wolf offspring
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 3df326f057bd7684093db3bdf71176e9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1492,7 +1492,7 @@ GameObject:
   - component: {fileID: 1533115802}
   - component: {fileID: 1533115801}
   m_Layer: 5
-  m_Name: Text_Inlay
+  m_Name: Text_Inset
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
