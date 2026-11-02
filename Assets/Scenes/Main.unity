@@ -393,6 +393,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 56042157}
   m_CullTransparentMesh: 1
+--- !u!1 &161459910
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 161459912}
+  - component: {fileID: 161459911}
+  m_Layer: 0
+  m_Name: MANAGER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &161459911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161459910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffa22bb539138a24c8179630b5326bfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameController
+  sentence: Like a bridge over troubled water
+  sentenceText: {fileID: 1608977718}
+  deemphasizedText: {fileID: 1533115801}
+  selectedText: {fileID: 574250878}
+  selectionBox: {fileID: 0}
+--- !u!4 &161459912
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161459910}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &511422008
 GameObject:
   m_ObjectHideFlags: 0
@@ -697,7 +746,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1533115800}
+  m_Father: {fileID: 2134669843}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -724,7 +773,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#FFFFFF00>Like </color>a bridge<color=#FFFFFF00> over troubled water
+  m_text: Like a bridge over troubled water
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: fc64901ba5f75e3428c15d854c10b271, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: fc64901ba5f75e3428c15d854c10b271, type: 2}
@@ -1372,8 +1421,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 574250877}
+  m_Children: []
   m_Father: {fileID: 2134669843}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1498,7 +1546,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1608977717
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1832,6 +1880,7 @@ RectTransform:
   m_Children:
   - {fileID: 1608977717}
   - {fileID: 1533115800}
+  - {fileID: 574250877}
   m_Father: {fileID: 1814401839}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1847,3 +1896,4 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 1303881475}
   - {fileID: 951289750}
+  - {fileID: 161459912}
