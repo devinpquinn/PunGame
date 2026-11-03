@@ -73,15 +73,18 @@ public class GameController : MonoBehaviour
 
     void BeginSelection(Vector2 screenPos)
     {
-        // Cache character centers before the background text is hidden.
-        sentenceText.ForceMeshUpdate();
-        TMP_TextInfo info = sentenceText.textInfo;
+        sourceSelected = new bool[sentence.Length];
+        SetSelecting(true);
+        RebuildTexts();
+
+        // Text has no tags yet, so character indices map directly to the sentence.
+        deemphasizedText.ForceMeshUpdate();
+        TMP_TextInfo info = deemphasizedText.textInfo;
         int count = info.characterCount;
 
         charCenters = new Vector3[count];
         charSourceIndices = new int[count];
         charSelected = new bool[count];
-        sourceSelected = new bool[sentence.Length];
 
         for (int i = 0; i < count; i++)
         {
@@ -90,8 +93,6 @@ public class GameController : MonoBehaviour
             charSourceIndices[i] = ci.index;
         }
 
-        SetSelecting(true);
-        RebuildTexts();
         UpdateSelection(screenPos);
     }
 
@@ -102,7 +103,7 @@ public class GameController : MonoBehaviour
             Mathf.Max(dragStart.x, screenPos.x), Mathf.Max(dragStart.y, screenPos.y));
 
         bool changed = false;
-        Transform textTransform = sentenceText.transform;
+        Transform textTransform = deemphasizedText.transform;
 
         for (int i = 0; i < charCenters.Length; i++)
         {
