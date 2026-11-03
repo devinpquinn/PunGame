@@ -14,6 +14,8 @@ public class GameController : MonoBehaviour
     [SerializeField] TMP_Text selectedText;
     [Tooltip("Optional visual for the selection box (e.g. a semi-transparent Image).")]
     [SerializeField] RectTransform selectionBox;
+    [Tooltip("Pixels the mouse must move while held before selection starts.")]
+    [SerializeField] float dragThreshold = 8f;
 
     Camera uiCamera;
     Vector3[] charCenters;
@@ -21,6 +23,7 @@ public class GameController : MonoBehaviour
     bool[] charSelected;
     bool[] sourceSelected;
     Vector2 dragStart;
+    bool isPressPending;
     bool isSelecting;
 
     void Start()
@@ -48,7 +51,20 @@ public class GameController : MonoBehaviour
         Vector2 mousePos = mouse.position.ReadValue();
 
         if (mouse.leftButton.wasPressedThisFrame)
-            BeginSelection(mousePos);
+        {
+            dragStart = mousePos;
+            isPressPending = true;
+        }
+        else if (isPressPending)
+        {
+            if (!mouse.leftButton.isPressed)
+                isPressPending = false;
+            else if (Vector2.Distance(dragStart, mousePos) >= dragThreshold)
+            {
+                isPressPending = false;
+                BeginSelection(mousePos);
+            }
+        }
         else if (isSelecting && mouse.leftButton.isPressed)
             UpdateSelection(mousePos);
         else if (isSelecting)
@@ -74,7 +90,6 @@ public class GameController : MonoBehaviour
             charSourceIndices[i] = ci.index;
         }
 
-        dragStart = screenPos;
         SetSelecting(true);
         RebuildTexts();
         UpdateSelection(screenPos);
@@ -114,7 +129,7 @@ public class GameController : MonoBehaviour
         {
             if (sourceSelected[i]) sb.Append(sentence[i]);
         }
-        Debug.Log(sb.ToString());
+        if (sb.Length > 0) Debug.Log(sb.ToString());
 
         SetSelecting(false);
     }
