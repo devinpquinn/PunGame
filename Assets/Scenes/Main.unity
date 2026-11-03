@@ -315,8 +315,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: to shorten a piece of writing
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: eebb569c7a5ae994da9d3200b227b83c, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: eebb569c7a5ae994da9d3200b227b83c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -427,6 +427,7 @@ MonoBehaviour:
   deemphasizedText: {fileID: 1533115801}
   selectedText: {fileID: 574250878}
   selectionBox: {fileID: 1342910069}
+  dragThreshold: 8
 --- !u!4 &161459912
 Transform:
   m_ObjectHideFlags: 0
@@ -1774,9 +1775,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 511422009}
-  - {fileID: 1269428558}
-  - {fileID: 56042158}
   - {fileID: 11940790}
+  - {fileID: 56042158}
+  - {fileID: 1269428558}
   - {fileID: 1077744550}
   m_Father: {fileID: 1814401839}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
