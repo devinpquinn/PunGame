@@ -19,6 +19,8 @@ public class GameController : MonoBehaviour
     [SerializeField] float dragThreshold = 8f;
 
     [SerializeField] Button playButton;
+    [SerializeField] GameObject buttonImage;
+    [SerializeField] GameObject buttonImagePressed;
     [SerializeField] AudioSource sentenceAudioSource;
     [SerializeField] AudioClip sentenceClip;
 
@@ -63,6 +65,9 @@ public class GameController : MonoBehaviour
         sentenceAudioSource.Play();
         wasAudioPlaying = true;
         if (playButton != null) playButton.interactable = false;
+        
+        buttonImage.SetActive(false);
+        buttonImagePressed.SetActive(true);
     }
 
     void Update()
@@ -71,6 +76,9 @@ public class GameController : MonoBehaviour
         {
             wasAudioPlaying = false;
             if (playButton != null) playButton.interactable = true;
+            
+            buttonImage.SetActive(true);
+            buttonImagePressed.SetActive(false);
         }
 
         Mouse mouse = Mouse.current;
