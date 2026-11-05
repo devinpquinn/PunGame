@@ -152,6 +152,7 @@ MonoBehaviour:
   sentenceText: {fileID: 1608977718}
   deemphasizedText: {fileID: 1533115801}
   selectedText: {fileID: 574250878}
+  sentenceWidthTarget: {fileID: 2134669843}
   selectionBox: {fileID: 1342910069}
   dragThreshold: 8
   playButton: {fileID: 918983700}

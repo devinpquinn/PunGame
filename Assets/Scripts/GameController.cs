@@ -14,6 +14,8 @@ public class GameController : MonoBehaviour
     [SerializeField] TMP_Text sentenceText;
     [SerializeField] TMP_Text deemphasizedText;
     [SerializeField] TMP_Text selectedText;
+    [Tooltip("RectTransform whose width is set to the sentence's preferred width when the text is applied.")]
+    [SerializeField] RectTransform sentenceWidthTarget;
     [Tooltip("Optional visual for the selection box (e.g. a semi-transparent Image).")]
     [SerializeField] RectTransform selectionBox;
     [Tooltip("Pixels the mouse must move while held before selection starts.")]
@@ -97,10 +99,8 @@ public class GameController : MonoBehaviour
         selectedText.text = sentence;
 
         sentenceText.ForceMeshUpdate();
-        float width = sentenceText.preferredWidth;
-        SetRectWidth(sentenceText.rectTransform, width);
-        SetRectWidth(deemphasizedText.rectTransform, width);
-        SetRectWidth(selectedText.rectTransform, width);
+        if (sentenceWidthTarget != null)
+            SetRectWidth(sentenceWidthTarget, sentenceText.preferredWidth);
     }
 
     static void SetRectWidth(RectTransform rt, float width)
