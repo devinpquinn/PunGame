@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffa22bb539138a24c8179630b5326bfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameController
-  sentence: Like a bridge over troubled water
+  sentence: Puzzle text goes here
   sentenceText: {fileID: 1608977718}
   deemphasizedText: {fileID: 1533115801}
   selectedText: {fileID: 574250878}

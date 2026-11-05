@@ -294,7 +294,7 @@ public class GameController : MonoBehaviour
         {
             if (sourceSelected[i]) sb.Append(sentence[i]);
         }
-        return sb.ToString();
+        return sb.ToString().Trim();
     }
 
     int FindMatchingClue(string selection)
