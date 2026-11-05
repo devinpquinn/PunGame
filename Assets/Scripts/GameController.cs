@@ -275,6 +275,7 @@ public class GameController : MonoBehaviour
         {
             // Correct answer: keep the selection visible and resolve once the clip finishes.
             isSelecting = false;
+            if (selectionBox != null) selectionBox.gameObject.SetActive(false);
 
             if (PlayClip(clueRuntimes[clueIndex].data.answerClip))
                 pendingSolveIndex = clueIndex;
