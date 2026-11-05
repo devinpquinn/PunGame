@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edb0dae99c526cb428e0edda18629c33, type: 3}
+  m_Name: LikeABridge
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleData
+  sentence: Like a bridge over troubled water
+  sentenceClip: {fileID: 8300000, guid: 34ad1e9a230bba6498a3d66a1b4de91a, type: 3}
+  clues:
+  - clueText: soviet canine cosmonaut
+    answerText: laika
+    acceptedPatterns:
+    - Like a
+    answerClip: {fileID: 0}
+  - clueText: loose pile of broken fragments
+    answerText: rubble
+    acceptedPatterns:
+    - rouble
+    answerClip: {fileID: 0}
+  - clueText: shorten a piece of writing
+    answerText: abridge
+    acceptedPatterns:
+    - a bridge
+    answerClip: {fileID: 0}
+  - clueText: bear, fox, or wolf offspring
+    answerText: cub
+    acceptedPatterns:
+    - ke a b
+    answerClip: {fileID: 0}
+  - clueText: female human offspring, to a parent
+    answerText: daughter
+    acceptedPatterns:
+    - d water
+    answerClip: {fileID: 0}
