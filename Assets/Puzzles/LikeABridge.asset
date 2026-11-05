@@ -19,24 +19,24 @@ MonoBehaviour:
     answerText: laika
     acceptedPatterns:
     - Like a
-    answerClip: {fileID: 0}
+    answerClip: {fileID: 8300000, guid: 725e0d068b1629f4dafa80597ee49b23, type: 3}
   - clueText: loose pile of broken fragments
     answerText: rubble
     acceptedPatterns:
     - rouble
-    answerClip: {fileID: 0}
+    answerClip: {fileID: 8300000, guid: c2b3294e53c0dbd4b9c01c5b06fc39f7, type: 3}
   - clueText: shorten a piece of writing
     answerText: abridge
     acceptedPatterns:
     - a bridge
-    answerClip: {fileID: 0}
+    answerClip: {fileID: 8300000, guid: 507d781356f4b6942aadf57f9025e8b9, type: 3}
   - clueText: bear, fox, or wolf offspring
     answerText: cub
     acceptedPatterns:
     - ke a b
-    answerClip: {fileID: 0}
+    answerClip: {fileID: 8300000, guid: 76f6ee6cb7f3b5f4c9f17adf6b05690e, type: 3}
   - clueText: female human offspring, to a parent
     answerText: daughter
     acceptedPatterns:
     - d water
-    answerClip: {fileID: 0}
+    answerClip: {fileID: 8300000, guid: 55e12ae6e7704b6448baf6c18dbd3fc8, type: 3}
