@@ -2,6 +2,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -17,6 +18,10 @@ public class GameController : MonoBehaviour
     [Tooltip("Pixels the mouse must move while held before selection starts.")]
     [SerializeField] float dragThreshold = 8f;
 
+    [SerializeField] Button playButton;
+    [SerializeField] AudioSource sentenceAudioSource;
+    [SerializeField] AudioClip sentenceClip;
+
     Camera uiCamera;
     Vector3[] charCenters;
     int[] charSourceIndices;
@@ -25,6 +30,9 @@ public class GameController : MonoBehaviour
     Vector2 dragStart;
     bool isPressPending;
     bool isSelecting;
+    bool wasAudioPlaying;
+
+    bool IsAudioPlaying => sentenceAudioSource != null && sentenceAudioSource.isPlaying;
 
     void Start()
     {
@@ -40,11 +48,31 @@ public class GameController : MonoBehaviour
             selectionBox.anchorMin = selectionBox.anchorMax = selectionBox.pivot = new Vector2(0.5f, 0.5f);
         }
 
+        if (playButton != null) playButton.onClick.AddListener(PlaySentence);
+
         SetSelecting(false);
+    }
+
+    void PlaySentence()
+    {
+        if (sentenceAudioSource == null) return;
+
+        if (sentenceClip != null) sentenceAudioSource.clip = sentenceClip;
+        if (sentenceAudioSource.clip == null) return;
+
+        sentenceAudioSource.Play();
+        wasAudioPlaying = true;
+        if (playButton != null) playButton.interactable = false;
     }
 
     void Update()
     {
+        if (wasAudioPlaying && !IsAudioPlaying)
+        {
+            wasAudioPlaying = false;
+            if (playButton != null) playButton.interactable = true;
+        }
+
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
@@ -52,6 +80,7 @@ public class GameController : MonoBehaviour
 
         if (mouse.leftButton.wasPressedThisFrame)
         {
+            if (IsAudioPlaying) return;
             dragStart = mousePos;
             isPressPending = true;
         }
