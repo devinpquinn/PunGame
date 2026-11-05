@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -24,6 +25,24 @@ public class GameController : MonoBehaviour
     [SerializeField] AudioSource sentenceAudioSource;
     [SerializeField] AudioClip sentenceClip;
 
+    [Header("Puzzle")]
+    [Tooltip("The puzzle to load. When set, overrides the sentence/clip above.")]
+    [SerializeField] PuzzleData puzzle;
+
+    [Header("Clues & Answers")]
+    [Tooltip("Parent the spawned clue objects are added under.")]
+    [SerializeField] Transform clueParent;
+    [Tooltip("Parent the spawned answer objects are added under.")]
+    [SerializeField] Transform answerParent;
+    [Tooltip("Prefab spawned for each clue. Must contain a TMP_Text.")]
+    [SerializeField] GameObject cluePrefab;
+    [Tooltip("Prefab spawned for each answer. Must contain a TMP_Text.")]
+    [SerializeField] GameObject answerPrefab;
+    [Tooltip("Font applied to a clue's text once it is solved.")]
+    [SerializeField] TMP_FontAsset solvedClueFont;
+    [Tooltip("Font applied to an answer's text once it is solved.")]
+    [SerializeField] TMP_FontAsset solvedAnswerFont;
+
     Camera uiCamera;
     Vector3[] charCenters;
     int[] charSourceIndices;
@@ -34,13 +53,28 @@ public class GameController : MonoBehaviour
     bool isSelecting;
     bool wasAudioPlaying;
 
+    readonly List<ClueRuntime> clueRuntimes = new List<ClueRuntime>();
+    int pendingSolveIndex = -1;
+
     bool IsAudioPlaying => sentenceAudioSource != null && sentenceAudioSource.isPlaying;
+
+    class ClueRuntime
+    {
+        public ClueEntry data;
+        public TMP_Text clueText;
+        public TMP_Text answerText;
+        public bool solved;
+    }
 
     void Start()
     {
-        sentenceText.text = sentence;
-        deemphasizedText.text = sentence;
-        selectedText.text = sentence;
+        if (puzzle != null)
+        {
+            sentence = puzzle.sentence;
+            sentenceClip = puzzle.sentenceClip;
+        }
+
+        ApplySentenceText();
 
         Canvas canvas = sentenceText.canvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -52,22 +86,89 @@ public class GameController : MonoBehaviour
 
         if (playButton != null) playButton.onClick.AddListener(PlaySentence);
 
+        SpawnClues();
         SetSelecting(false);
+    }
+
+    void ApplySentenceText()
+    {
+        sentenceText.text = sentence;
+        deemphasizedText.text = sentence;
+        selectedText.text = sentence;
+
+        sentenceText.ForceMeshUpdate();
+        float width = sentenceText.preferredWidth;
+        SetRectWidth(sentenceText.rectTransform, width);
+        SetRectWidth(deemphasizedText.rectTransform, width);
+        SetRectWidth(selectedText.rectTransform, width);
+    }
+
+    static void SetRectWidth(RectTransform rt, float width)
+    {
+        rt.sizeDelta = new Vector2(width, rt.sizeDelta.y);
+    }
+
+    void SpawnClues()
+    {
+        clueRuntimes.Clear();
+        if (puzzle == null) return;
+
+        foreach (ClueEntry entry in puzzle.clues)
+        {
+            var rt = new ClueRuntime { data = entry };
+
+            if (cluePrefab != null && clueParent != null)
+            {
+                GameObject go = Instantiate(cluePrefab, clueParent);
+                rt.clueText = go.GetComponentInChildren<TMP_Text>();
+                if (rt.clueText != null) rt.clueText.text = entry.clueText;
+            }
+
+            if (answerPrefab != null && answerParent != null)
+            {
+                GameObject go = Instantiate(answerPrefab, answerParent);
+                rt.answerText = go.GetComponentInChildren<TMP_Text>();
+                if (rt.answerText != null) rt.answerText.text = Obfuscate(entry.answerText);
+            }
+
+            clueRuntimes.Add(rt);
+        }
+    }
+
+    static string Obfuscate(string answer)
+    {
+        if (string.IsNullOrEmpty(answer)) return string.Empty;
+
+        var sb = new StringBuilder(answer.Length);
+        foreach (char c in answer)
+            sb.Append(char.IsWhiteSpace(c) ? c : '?');
+        return sb.ToString();
     }
 
     void PlaySentence()
     {
-        if (sentenceAudioSource == null) return;
+        AudioClip clip = sentenceClip != null
+            ? sentenceClip
+            : (sentenceAudioSource != null ? sentenceAudioSource.clip : null);
 
-        if (sentenceClip != null) sentenceAudioSource.clip = sentenceClip;
-        if (sentenceAudioSource.clip == null) return;
+        if (PlayClip(clip)) SetPlayButtonVisual(pressed: true);
+    }
 
+    bool PlayClip(AudioClip clip)
+    {
+        if (sentenceAudioSource == null || clip == null) return false;
+
+        sentenceAudioSource.clip = clip;
         sentenceAudioSource.Play();
         wasAudioPlaying = true;
         if (playButton != null) playButton.interactable = false;
-        
-        buttonImage.SetActive(false);
-        buttonImagePressed.SetActive(true);
+        return true;
+    }
+
+    void SetPlayButtonVisual(bool pressed)
+    {
+        if (buttonImage != null) buttonImage.SetActive(!pressed);
+        if (buttonImagePressed != null) buttonImagePressed.SetActive(pressed);
     }
 
     void Update()
@@ -76,9 +177,14 @@ public class GameController : MonoBehaviour
         {
             wasAudioPlaying = false;
             if (playButton != null) playButton.interactable = true;
-            
-            buttonImage.SetActive(true);
-            buttonImagePressed.SetActive(false);
+            SetPlayButtonVisual(pressed: false);
+
+            if (pendingSolveIndex >= 0)
+            {
+                int index = pendingSolveIndex;
+                pendingSolveIndex = -1;
+                ResolveClue(index);
+            }
         }
 
         Mouse mouse = Mouse.current;
@@ -162,12 +268,65 @@ public class GameController : MonoBehaviour
 
     void EndSelection()
     {
+        string selected = BuildSelectedString();
+        int clueIndex = FindMatchingClue(selected);
+
+        if (clueIndex >= 0)
+        {
+            // Correct answer: keep the selection visible and resolve once the clip finishes.
+            isSelecting = false;
+
+            if (PlayClip(clueRuntimes[clueIndex].data.answerClip))
+                pendingSolveIndex = clueIndex;
+            else
+                ResolveClue(clueIndex);
+        }
+        else
+        {
+            SetSelecting(false);
+        }
+    }
+
+    string BuildSelectedString()
+    {
         var sb = new StringBuilder();
         for (int i = 0; i < sentence.Length; i++)
         {
             if (sourceSelected[i]) sb.Append(sentence[i]);
         }
-        if (sb.Length > 0) Debug.Log(sb.ToString());
+        return sb.ToString();
+    }
+
+    int FindMatchingClue(string selection)
+    {
+        if (string.IsNullOrEmpty(selection)) return -1;
+
+        for (int i = 0; i < clueRuntimes.Count; i++)
+        {
+            ClueRuntime rt = clueRuntimes[i];
+            if (rt.solved) continue;
+
+            foreach (string pattern in rt.data.acceptedPatterns)
+            {
+                if (selection == pattern) return i;
+            }
+        }
+        return -1;
+    }
+
+    void ResolveClue(int index)
+    {
+        ClueRuntime rt = clueRuntimes[index];
+        rt.solved = true;
+
+        if (rt.clueText != null && solvedClueFont != null)
+            rt.clueText.font = solvedClueFont;
+
+        if (rt.answerText != null)
+        {
+            if (solvedAnswerFont != null) rt.answerText.font = solvedAnswerFont;
+            rt.answerText.text = rt.data.answerText;
+        }
 
         SetSelecting(false);
     }
