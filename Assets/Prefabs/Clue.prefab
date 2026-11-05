@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: clue text goes here
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: fc64901ba5f75e3428c15d854c10b271, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: fc64901ba5f75e3428c15d854c10b271, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

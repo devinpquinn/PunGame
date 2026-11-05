@@ -166,7 +166,7 @@ MonoBehaviour:
   cluePrefab: {fileID: 6001758109842653010, guid: 847f09f698625a541b3cef6ee8ba5546, type: 3}
   answerPrefab: {fileID: 6637308505401377425, guid: 5de6dbd4cc7d00c4888f2e5aa1a9c32a, type: 3}
   solvedClueFont: {fileID: 11400000, guid: eebb569c7a5ae994da9d3200b227b83c, type: 2}
-  solvedAnswerFont: {fileID: 11400000, guid: 9eef1b0782821ee4e91b2da7f6e270ea, type: 2}
+  solvedAnswerFont: {fileID: 11400000, guid: fc64901ba5f75e3428c15d854c10b271, type: 2}
 --- !u!4 &161459912
 Transform:
   m_ObjectHideFlags: 0
