@@ -40,10 +40,6 @@ public class GameController : MonoBehaviour
     [SerializeField] GameObject cluePrefab;
     [Tooltip("Prefab spawned for each answer. Must contain a TMP_Text.")]
     [SerializeField] GameObject answerPrefab;
-    [Tooltip("Font applied to a clue's text once it is solved.")]
-    [SerializeField] TMP_FontAsset solvedClueFont;
-    [Tooltip("Font applied to an answer's text once it is solved.")]
-    [SerializeField] TMP_FontAsset solvedAnswerFont;
 
     Camera uiCamera;
     Vector3[] charCenters;
@@ -63,8 +59,10 @@ public class GameController : MonoBehaviour
     class ClueRuntime
     {
         public ClueEntry data;
-        public TMP_Text clueText;
-        public TMP_Text answerText;
+        public TMP_Text clueBackground;
+        public TMP_Text clueForeground;
+        public TMP_Text answerBackground;
+        public TMP_Text answerForeground;
         public bool solved;
     }
 
@@ -120,19 +118,53 @@ public class GameController : MonoBehaviour
             if (cluePrefab != null && clueParent != null)
             {
                 GameObject go = Instantiate(cluePrefab, clueParent);
-                rt.clueText = go.GetComponentInChildren<TMP_Text>();
-                if (rt.clueText != null) rt.clueText.text = entry.clueText;
+                GetTexts(go, out rt.clueBackground, out rt.clueForeground);
+                SetText(rt.clueBackground, rt.clueForeground, entry.clueText);
+                // An unanswered clue is emphasized.
+                SetEmphasis(rt.clueBackground, rt.clueForeground, emphasized: true);
             }
 
             if (answerPrefab != null && answerParent != null)
             {
                 GameObject go = Instantiate(answerPrefab, answerParent);
-                rt.answerText = go.GetComponentInChildren<TMP_Text>();
-                if (rt.answerText != null) rt.answerText.text = Obfuscate(entry.answerText);
+                GetTexts(go, out rt.answerBackground, out rt.answerForeground);
+                SetText(rt.answerBackground, rt.answerForeground, Obfuscate(entry.answerText));
+                // An unsolved answer is de-emphasized.
+                SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: false);
             }
 
             clueRuntimes.Add(rt);
         }
+    }
+
+    // The regular (root) object holds the background text; its child holds the foreground text.
+    static void GetTexts(GameObject go, out TMP_Text background, out TMP_Text foreground)
+    {
+        background = go.GetComponent<TMP_Text>();
+        foreground = null;
+        foreach (TMP_Text t in go.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (t != background)
+            {
+                foreground = t;
+                break;
+            }
+        }
+    }
+
+    static void SetText(TMP_Text background, TMP_Text foreground, string text)
+    {
+        if (background != null) background.text = text;
+        if (foreground != null) foreground.text = text;
+    }
+
+    // Emphasized shows the foreground text; de-emphasized shows the background text.
+    // The component's enabled flag is toggled (not the GameObject) because the
+    // foreground object is a child of the background object.
+    static void SetEmphasis(TMP_Text background, TMP_Text foreground, bool emphasized)
+    {
+        if (background != null) background.enabled = !emphasized;
+        if (foreground != null) foreground.enabled = emphasized;
     }
 
     static string Obfuscate(string answer)
@@ -320,14 +352,12 @@ public class GameController : MonoBehaviour
         ClueRuntime rt = clueRuntimes[index];
         rt.solved = true;
 
-        if (rt.clueText != null && solvedClueFont != null)
-            rt.clueText.font = solvedClueFont;
+        // A solved clue is de-emphasized.
+        SetEmphasis(rt.clueBackground, rt.clueForeground, emphasized: false);
 
-        if (rt.answerText != null)
-        {
-            if (solvedAnswerFont != null) rt.answerText.font = solvedAnswerFont;
-            rt.answerText.text = rt.data.answerText;
-        }
+        // A solved answer is emphasized and reveals its real text.
+        SetText(rt.answerBackground, rt.answerForeground, rt.data.answerText);
+        SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
 
         SetSelecting(false);
     }
