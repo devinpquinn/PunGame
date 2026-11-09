@@ -20,6 +20,8 @@ public class GameController : MonoBehaviour
     [SerializeField] RectTransform selectionBox;
     [Tooltip("Pixels the mouse must move while held before selection starts.")]
     [SerializeField] float dragThreshold = 8f;
+    [Tooltip("Color of the selected text while a correct selection's audio plays.")]
+    [SerializeField] Color correctSelectionColor = Color.green;
 
     [SerializeField] Button playButton;
     [SerializeField] GameObject buttonImage;
@@ -42,6 +44,7 @@ public class GameController : MonoBehaviour
     [SerializeField] GameObject answerPrefab;
 
     Camera uiCamera;
+    Color selectedTextDefaultColor;
     Vector3[] charCenters;
     int[] charSourceIndices;
     bool[] charSelected;
@@ -75,6 +78,7 @@ public class GameController : MonoBehaviour
         }
 
         ApplySentenceText();
+        selectedTextDefaultColor = selectedText.color;
 
         Canvas canvas = sentenceText.canvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -308,6 +312,7 @@ public class GameController : MonoBehaviour
             // Correct answer: keep the selection visible and resolve once the clip finishes.
             isSelecting = false;
             if (selectionBox != null) selectionBox.gameObject.SetActive(false);
+            selectedText.color = correctSelectionColor;
 
             if (PlayClip(clueRuntimes[clueIndex].data.answerClip))
                 pendingSolveIndex = clueIndex;
@@ -359,6 +364,7 @@ public class GameController : MonoBehaviour
         SetText(rt.answerBackground, rt.answerForeground, rt.data.answerText);
         SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
 
+        selectedText.color = selectedTextDefaultColor;
         SetSelecting(false);
     }
 

@@ -155,6 +155,7 @@ MonoBehaviour:
   sentenceWidthTarget: {fileID: 2134669843}
   selectionBox: {fileID: 1342910069}
   dragThreshold: 8
+  correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
   buttonImagePressed: {fileID: 1145401975}
