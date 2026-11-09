@@ -26,6 +26,8 @@ public class GameController : MonoBehaviour
 
     [Tooltip("Text Animator on the selected text, used to play an effect on a correct selection. If left unset, it is looked up on the selected text object.")]
     [SerializeField] TextAnimator_TMP selectedTextAnimator;
+    [Tooltip("Text Animator effect tag whose one-shot appearance plays on each character as it is selected. Should be an effect with an appearance (e.g. bounce).")]
+    [SerializeField] string selectionEffectTag = "bounce";
     [Tooltip("Text Animator effect tag applied to a correct selection while its audio plays.")]
     [SerializeField] string correctSelectionEffectTag = "wave";
 
@@ -265,6 +267,7 @@ public class GameController : MonoBehaviour
     {
         sourceSelected = new bool[sentence.Length];
         SetSelecting(true);
+        PrepareSelectedTextEffect();
         RebuildTexts();
 
         // Text has no tags yet, so character indices map directly to the sentence.
@@ -286,6 +289,25 @@ public class GameController : MonoBehaviour
         UpdateSelection(screenPos);
     }
 
+    // Loads the whole sentence into the selected-text animator wrapped in the one-shot
+    // appearance effect ({tag}...{/}), with every character hidden. Characters are then
+    // revealed one-by-one in UpdateSelection, which plays the appearance as each is selected.
+    void PrepareSelectedTextEffect()
+    {
+        if (selectedTextAnimator == null) return;
+
+        selectedTextAnimator.enabled = true;
+        selectedTextAnimator.SetAppearancesActive(true);
+        selectedTextAnimator.SetText(WrapAppearance(sentence, selectionEffectTag), hideText: true);
+
+        // Keep the whole text within the visible range; the per-character visible flags
+        // (toggled in UpdateSelection) decide what actually shows and play the appearance.
+        selectedTextAnimator.FirstVisibleCharacter = 0;
+        selectedTextAnimator.MaxVisibleCharacters = sentence.Length;
+        for (int i = 0; i < sentence.Length; i++)
+            selectedTextAnimator.SetVisibilityChar(i, false, canPlayEffects: false);
+    }
+
     void UpdateSelection(Vector2 screenPos)
     {
         Rect rect = Rect.MinMaxRect(
@@ -304,7 +326,13 @@ public class GameController : MonoBehaviour
                 charSelected[i] = inside;
                 int src = charSourceIndices[i];
                 if (src >= 0 && src < sourceSelected.Length)
+                {
                     sourceSelected[src] = inside;
+                    // Reveal a newly selected character (playing its appearance effect);
+                    // hide a deselected one instantly.
+                    if (selectedTextAnimator != null)
+                        selectedTextAnimator.SetVisibilityChar(src, inside, canPlayEffects: inside);
+                }
                 changed = true;
             }
         }
@@ -386,7 +414,9 @@ public class GameController : MonoBehaviour
         if (selectedTextAnimator == null) return;
 
         selectedTextAnimator.enabled = true;
-        SetSelectedText(BuildMaskedSentence(hideSelected: false, emphasizeVisible: true));
+        // The correct-selection effect (e.g. wave) is a continuous behavior: <tag>...</tag>.
+        SetSelectedText(BuildMaskedSentence(hideSelected: false,
+            BehaviorOpen(correctSelectionEffectTag), BehaviorClose(correctSelectionEffectTag)));
     }
 
     void ClearCorrectSelectionEffect()
@@ -399,8 +429,18 @@ public class GameController : MonoBehaviour
     void RebuildTexts()
     {
         deemphasizedText.text = BuildMaskedSentence(hideSelected: true);
-        SetSelectedText(BuildMaskedSentence(hideSelected: false));
+        // When an animator is present, the selected text is loaded once in
+        // PrepareSelectedTextEffect and revealed per-character via SetVisibilityChar.
+        if (selectedTextAnimator != null) return;
+        selectedText.text = BuildMaskedSentence(hideSelected: false);
     }
+
+    // Text Animator effect tags: behaviors (continuous) use angle brackets, appearances
+    // (one-shot, played when a character is revealed) use curly brackets.
+    static string BehaviorOpen(string tag) => string.IsNullOrEmpty(tag) ? null : "<" + tag + ">";
+    static string BehaviorClose(string tag) => string.IsNullOrEmpty(tag) ? null : "</" + tag + ">";
+    static string WrapAppearance(string text, string tag)
+        => string.IsNullOrEmpty(tag) ? text : "{" + tag + "}" + text + "{/}";
 
     // The selected text is routed through Text Animator (when present) so it manages
     // character visibility itself; assigning its TMP text directly would leave the
@@ -411,11 +451,9 @@ public class GameController : MonoBehaviour
         else selectedText.text = text;
     }
 
-    string BuildMaskedSentence(bool hideSelected, bool emphasizeVisible = false)
+    string BuildMaskedSentence(bool hideSelected, string effectOpenTag = null, string effectCloseTag = null)
     {
-        bool useEffect = emphasizeVisible && !string.IsNullOrEmpty(correctSelectionEffectTag);
-        string effectOpenTag = useEffect ? $"<{correctSelectionEffectTag}>" : null;
-        string effectCloseTag = useEffect ? $"</{correctSelectionEffectTag}>" : null;
+        bool useEffect = !string.IsNullOrEmpty(effectOpenTag);
 
         var sb = new StringBuilder(sentence.Length + 64);
         bool hiding = false;
