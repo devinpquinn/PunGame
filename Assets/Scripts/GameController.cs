@@ -386,7 +386,7 @@ public class GameController : MonoBehaviour
         if (selectedTextAnimator == null) return;
 
         selectedTextAnimator.enabled = true;
-        selectedTextAnimator.SetText(BuildMaskedSentence(hideSelected: false, emphasizeVisible: true));
+        SetSelectedText(BuildMaskedSentence(hideSelected: false, emphasizeVisible: true));
     }
 
     void ClearCorrectSelectionEffect()
@@ -399,7 +399,16 @@ public class GameController : MonoBehaviour
     void RebuildTexts()
     {
         deemphasizedText.text = BuildMaskedSentence(hideSelected: true);
-        selectedText.text = BuildMaskedSentence(hideSelected: false);
+        SetSelectedText(BuildMaskedSentence(hideSelected: false));
+    }
+
+    // The selected text is routed through Text Animator (when present) so it manages
+    // character visibility itself; assigning its TMP text directly would leave the
+    // characters hidden.
+    void SetSelectedText(string text)
+    {
+        if (selectedTextAnimator != null) selectedTextAnimator.SetText(text);
+        else selectedText.text = text;
     }
 
     string BuildMaskedSentence(bool hideSelected, bool emphasizeVisible = false)
@@ -450,6 +459,9 @@ public class GameController : MonoBehaviour
         sentenceText.gameObject.SetActive(!selecting);
         deemphasizedText.gameObject.SetActive(selecting);
         selectedText.gameObject.SetActive(selecting);
+        // The animator must be enabled while the selected text is shown so it reveals
+        // (and later animates) the characters it manages.
+        if (selectedTextAnimator != null) selectedTextAnimator.enabled = selecting;
         if (selectionBox != null) selectionBox.gameObject.SetActive(selecting);
     }
 }

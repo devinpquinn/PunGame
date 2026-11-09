@@ -156,7 +156,7 @@ MonoBehaviour:
   selectionBox: {fileID: 1342910069}
   dragThreshold: 8
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
-  selectedTextAnimator: {fileID: 0}
+  selectedTextAnimator: {fileID: 574250880}
   correctSelectionEffectTag: wave
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
