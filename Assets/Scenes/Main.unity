@@ -159,6 +159,8 @@ MonoBehaviour:
   selectedTextAnimator: {fileID: 574250880}
   selectionEffectTag: bounceCustom
   correctSelectionEffectTag: waveCustom
+  revealBackEffectTag: bounceCustom
+  revealBackPerCharDelay: 0.01
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
   buttonImagePressed: {fileID: 1145401975}

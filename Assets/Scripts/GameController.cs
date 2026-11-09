@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Febucci.TextAnimatorForUnity.TextMeshPro;
@@ -30,6 +31,10 @@ public class GameController : MonoBehaviour
     [SerializeField] string selectionEffectTag = "bounce";
     [Tooltip("Text Animator effect tag applied to a correct selection while its audio plays.")]
     [SerializeField] string correctSelectionEffectTag = "wave";
+    [Tooltip("Text Animator appearance effect tag used to animate the remaining (non-selected) characters back in after a correct selection's audio finishes. Should be an effect with an appearance (e.g. fade).")]
+    [SerializeField] string revealBackEffectTag = "fade";
+    [Tooltip("Delay between each step as the remaining text spreads outward from the selection. Set to 0 to reveal it all at once.")]
+    [SerializeField] float revealBackPerCharDelay = 0.03f;
 
     [SerializeField] Button playButton;
     [SerializeField] GameObject buttonImage;
@@ -61,6 +66,7 @@ public class GameController : MonoBehaviour
     bool isPressPending;
     bool isSelecting;
     bool wasAudioPlaying;
+    bool isResolving;
 
     readonly List<ClueRuntime> clueRuntimes = new List<ClueRuntime>();
     int pendingSolveIndex = -1;
@@ -238,6 +244,7 @@ public class GameController : MonoBehaviour
 
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
+        if (isResolving) return;
 
         Vector2 mousePos = mouse.position.ReadValue();
 
@@ -405,8 +412,105 @@ public class GameController : MonoBehaviour
         SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
 
         selectedText.color = selectedTextDefaultColor;
+
+        // Animate the remaining (non-selected) characters back in before returning to the
+        // plain sentence view.
+        isResolving = true;
+        StartCoroutine(AnimateRemainingTextIn(FinishResolve));
+    }
+
+    // Reveals the characters that were not part of the selection, playing the reveal
+    // appearance effect on each (optionally staggered left-to-right), then waits for the
+    // animation to finish. Already-selected characters stay visible without re-animating.
+    IEnumerator AnimateRemainingTextIn(System.Action onComplete)
+    {
+        if (selectedTextAnimator == null)
+        {
+            onComplete?.Invoke();
+            yield break;
+        }
+
+        selectedTextAnimator.enabled = true;
+        selectedTextAnimator.SetAppearancesActive(true);
+        // Load the whole sentence (no masking) wrapped in the reveal appearance effect,
+        // hidden, so appearances are available to play as characters are revealed.
+        selectedTextAnimator.SetText(WrapAppearance(sentence, revealBackEffectTag), hideText: true);
+        selectedTextAnimator.FirstVisibleCharacter = 0;
+        selectedTextAnimator.MaxVisibleCharacters = sentence.Length;
+
+        // Keep the already-selected characters shown without re-animating them.
+        for (int i = 0; i < sentence.Length; i++)
+            selectedTextAnimator.SetVisibilityChar(i, sourceSelected[i], canPlayEffects: false);
+
+        // Reveal the remaining characters spreading outward from the selection: group them
+        // by their distance to the nearest selected character and reveal each ring (both
+        // sides at once), pausing between rings so the effect radiates from the selection.
+        int n = sentence.Length;
+        int[] distance = new int[n];
+        int maxDistance = ComputeDistanceToSelection(distance);
+
+        for (int d = 1; d <= maxDistance; d++)
+        {
+            bool revealedAny = false;
+            for (int i = 0; i < n; i++)
+            {
+                if (sourceSelected[i] || distance[i] != d) continue;
+                selectedTextAnimator.SetVisibilityChar(i, true, canPlayEffects: true);
+                revealedAny = true;
+            }
+            if (revealedAny && revealBackPerCharDelay > 0f)
+                yield return new WaitForSeconds(revealBackPerCharDelay);
+        }
+
+        // Wait for every appearance effect to finish before tearing down.
+        while (!selectedTextAnimator.allLettersShown)
+            yield return null;
+
+        onComplete?.Invoke();
+    }
+
+    void FinishResolve()
+    {
+        isResolving = false;
         ClearCorrectSelectionEffect();
         SetSelecting(false);
+    }
+
+    // Fills 'distance' with each character's index distance to the nearest selected
+    // character (0 for selected characters) and returns the largest distance found. If
+    // nothing is selected, falls back to a left-to-right order.
+    int ComputeDistanceToSelection(int[] distance)
+    {
+        int n = distance.Length;
+        const int Far = int.MaxValue / 2;
+
+        // Forward pass: distance to the nearest selected character on the left.
+        int last = -1;
+        for (int i = 0; i < n; i++)
+        {
+            if (sourceSelected[i]) { last = i; distance[i] = 0; }
+            else distance[i] = last < 0 ? Far : i - last;
+        }
+
+        // Backward pass: fold in the nearest selected character on the right.
+        last = -1;
+        bool hasSelection = false;
+        for (int i = n - 1; i >= 0; i--)
+        {
+            if (sourceSelected[i]) { last = i; distance[i] = 0; hasSelection = true; }
+            else if (last >= 0) distance[i] = Mathf.Min(distance[i], last - i);
+        }
+
+        if (!hasSelection)
+        {
+            for (int i = 0; i < n; i++) distance[i] = i + 1;
+            return n;
+        }
+
+        int maxDistance = 0;
+        for (int i = 0; i < n; i++)
+            if (!sourceSelected[i] && distance[i] > maxDistance) maxDistance = distance[i];
+        return maxDistance;
     }
 
     void ApplyCorrectSelectionEffect()
