@@ -411,10 +411,8 @@ public class GameController : MonoBehaviour
         SetText(rt.answerBackground, rt.answerForeground, rt.data.answerText);
         SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
 
-        selectedText.color = selectedTextDefaultColor;
-
         // Animate the remaining (non-selected) characters back in before returning to the
-        // plain sentence view.
+        // plain sentence view. The coroutine also eases the highlight color back to default.
         isResolving = true;
         StartCoroutine(AnimateRemainingTextIn(FinishResolve));
     }
@@ -426,6 +424,7 @@ public class GameController : MonoBehaviour
     {
         if (selectedTextAnimator == null)
         {
+            selectedText.color = selectedTextDefaultColor;
             onComplete?.Invoke();
             yield break;
         }
@@ -452,6 +451,12 @@ public class GameController : MonoBehaviour
         int maxDistance = ComputeDistanceToSelection(distance);
         bool[] revealedBack = new bool[n];
 
+        // Ease the selected segment's color from its highlight back to default over the
+        // whole spread. Start from the highlight color explicitly in case it drifted.
+        selectedText.color = correctSelectionColor;
+        float spreadDuration = maxDistance * Mathf.Max(0f, revealBackPerCharDelay);
+        float elapsed = 0f;
+
         for (int d = 1; d <= maxDistance; d++)
         {
             bool revealedAny = false;
@@ -462,13 +467,22 @@ public class GameController : MonoBehaviour
                 revealedBack[i] = true;
                 revealedAny = true;
             }
-            if (revealedAny)
+            if (!revealedAny) continue;
+
+            deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
+
+            // Advance one spread step, easing the color toward default as time passes.
+            float stepEnd = elapsed + revealBackPerCharDelay;
+            while (elapsed < stepEnd)
             {
-                deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
-                if (revealBackPerCharDelay > 0f)
-                    yield return new WaitForSeconds(revealBackPerCharDelay);
+                elapsed += Time.deltaTime;
+                float t = spreadDuration > 0f ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / spreadDuration)) : 1f;
+                selectedText.color = Color.Lerp(correctSelectionColor, selectedTextDefaultColor, t);
+                yield return null;
             }
         }
+
+        selectedText.color = selectedTextDefaultColor;
 
         // Wait for every appearance effect to finish before tearing down.
         while (!selectedTextAnimator.allLettersShown)
