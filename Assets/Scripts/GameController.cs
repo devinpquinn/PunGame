@@ -445,9 +445,12 @@ public class GameController : MonoBehaviour
         // Reveal the remaining characters spreading outward from the selection: group them
         // by their distance to the nearest selected character and reveal each ring (both
         // sides at once), pausing between rings so the effect radiates from the selection.
+        // As each character is revealed in the selected text, its counterpart is hidden in
+        // the deemphasized text, mirroring the swap done during selection.
         int n = sentence.Length;
         int[] distance = new int[n];
         int maxDistance = ComputeDistanceToSelection(distance);
+        bool[] revealedBack = new bool[n];
 
         for (int d = 1; d <= maxDistance; d++)
         {
@@ -456,10 +459,15 @@ public class GameController : MonoBehaviour
             {
                 if (sourceSelected[i] || distance[i] != d) continue;
                 selectedTextAnimator.SetVisibilityChar(i, true, canPlayEffects: true);
+                revealedBack[i] = true;
                 revealedAny = true;
             }
-            if (revealedAny && revealBackPerCharDelay > 0f)
-                yield return new WaitForSeconds(revealBackPerCharDelay);
+            if (revealedAny)
+            {
+                deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
+                if (revealBackPerCharDelay > 0f)
+                    yield return new WaitForSeconds(revealBackPerCharDelay);
+            }
         }
 
         // Wait for every appearance effect to finish before tearing down.
@@ -555,7 +563,7 @@ public class GameController : MonoBehaviour
         else selectedText.text = text;
     }
 
-    string BuildMaskedSentence(bool hideSelected, string effectOpenTag = null, string effectCloseTag = null)
+    string BuildMaskedSentence(bool hideSelected, string effectOpenTag = null, string effectCloseTag = null, bool[] alsoHide = null)
     {
         bool useEffect = !string.IsNullOrEmpty(effectOpenTag);
 
@@ -566,6 +574,7 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < sentence.Length; i++)
         {
             bool shouldHide = sourceSelected[i] == hideSelected;
+            if (alsoHide != null && alsoHide[i]) shouldHide = true;
             // The effect decorates the visible (selected) characters only.
             bool shouldEmphasize = useEffect && !shouldHide;
 
