@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Febucci.TextAnimatorForUnity.TextMeshPro;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -22,6 +23,11 @@ public class GameController : MonoBehaviour
     [SerializeField] float dragThreshold = 8f;
     [Tooltip("Color of the selected text while a correct selection's audio plays.")]
     [SerializeField] Color correctSelectionColor = Color.green;
+
+    [Tooltip("Text Animator on the selected text, used to play an effect on a correct selection. If left unset, it is looked up on the selected text object.")]
+    [SerializeField] TextAnimator_TMP selectedTextAnimator;
+    [Tooltip("Text Animator effect tag applied to a correct selection while its audio plays.")]
+    [SerializeField] string correctSelectionEffectTag = "wave";
 
     [SerializeField] Button playButton;
     [SerializeField] GameObject buttonImage;
@@ -79,6 +85,11 @@ public class GameController : MonoBehaviour
 
         ApplySentenceText();
         selectedTextDefaultColor = selectedText.color;
+
+        if (selectedTextAnimator == null && selectedText != null)
+            selectedTextAnimator = selectedText.GetComponent<TextAnimator_TMP>();
+        // The animator is only enabled while a correct selection plays its effect.
+        if (selectedTextAnimator != null) selectedTextAnimator.enabled = false;
 
         Canvas canvas = sentenceText.canvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -313,6 +324,7 @@ public class GameController : MonoBehaviour
             isSelecting = false;
             if (selectionBox != null) selectionBox.gameObject.SetActive(false);
             selectedText.color = correctSelectionColor;
+            ApplyCorrectSelectionEffect();
 
             if (PlayClip(clueRuntimes[clueIndex].data.answerClip))
                 pendingSolveIndex = clueIndex;
@@ -365,7 +377,23 @@ public class GameController : MonoBehaviour
         SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
 
         selectedText.color = selectedTextDefaultColor;
+        ClearCorrectSelectionEffect();
         SetSelecting(false);
+    }
+
+    void ApplyCorrectSelectionEffect()
+    {
+        if (selectedTextAnimator == null) return;
+
+        selectedTextAnimator.enabled = true;
+        selectedTextAnimator.SetText(BuildMaskedSentence(hideSelected: false, emphasizeVisible: true));
+    }
+
+    void ClearCorrectSelectionEffect()
+    {
+        if (selectedTextAnimator == null) return;
+
+        selectedTextAnimator.enabled = false;
     }
 
     void RebuildTexts()
@@ -374,22 +402,32 @@ public class GameController : MonoBehaviour
         selectedText.text = BuildMaskedSentence(hideSelected: false);
     }
 
-    string BuildMaskedSentence(bool hideSelected)
+    string BuildMaskedSentence(bool hideSelected, bool emphasizeVisible = false)
     {
+        bool useEffect = emphasizeVisible && !string.IsNullOrEmpty(correctSelectionEffectTag);
+        string effectOpenTag = useEffect ? $"<{correctSelectionEffectTag}>" : null;
+        string effectCloseTag = useEffect ? $"</{correctSelectionEffectTag}>" : null;
+
         var sb = new StringBuilder(sentence.Length + 64);
         bool hiding = false;
+        bool emphasizing = false;
 
         for (int i = 0; i < sentence.Length; i++)
         {
             bool shouldHide = sourceSelected[i] == hideSelected;
-            if (shouldHide != hiding)
-            {
-                sb.Append(shouldHide ? HideOpenTag : HideCloseTag);
-                hiding = shouldHide;
-            }
+            // The effect decorates the visible (selected) characters only.
+            bool shouldEmphasize = useEffect && !shouldHide;
+
+            // Emit closing tags before opening tags to keep regions properly nested.
+            if (hiding && !shouldHide) { sb.Append(HideCloseTag); hiding = false; }
+            if (emphasizing && !shouldEmphasize) { sb.Append(effectCloseTag); emphasizing = false; }
+            if (!emphasizing && shouldEmphasize) { sb.Append(effectOpenTag); emphasizing = true; }
+            if (!hiding && shouldHide) { sb.Append(HideOpenTag); hiding = true; }
+
             sb.Append(sentence[i]);
         }
 
+        if (emphasizing) sb.Append(effectCloseTag);
         if (hiding) sb.Append(HideCloseTag);
         return sb.ToString();
     }

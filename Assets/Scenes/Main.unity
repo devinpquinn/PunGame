@@ -156,6 +156,8 @@ MonoBehaviour:
   selectionBox: {fileID: 1342910069}
   dragThreshold: 8
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
+  selectedTextAnimator: {fileID: 0}
+  correctSelectionEffectTag: wave
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
   buttonImagePressed: {fileID: 1145401975}
@@ -329,6 +331,7 @@ GameObject:
   - component: {fileID: 574250877}
   - component: {fileID: 574250879}
   - component: {fileID: 574250878}
+  - component: {fileID: 574250880}
   m_Layer: 5
   m_Name: Text_Emphasized
   m_TagString: Untagged
@@ -455,6 +458,34 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 574250876}
   m_CullTransparentMesh: 1
+--- !u!114 &574250880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 574250876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8ace8ced0e81c847968cdca0aeda757, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Febucci.TextAnimatorForUnity.TMP.Runtime::Febucci.TextAnimatorForUnity.TextMeshPro.TextAnimator_TMP
+  localSettings:
+    isResettingTimeOnNewText: 1
+    defaultEffectsMode: 1
+    timeScale: 0
+    defaultBehaviorTags: []
+    defaultAppearanceTags: []
+    defaultDisappearanceTags: []
+    isAnimatingBehaviors: 1
+    isAnimatingAppearances: 1
+    isAnimatingDisappearances: 1
+    useDynamicScaling: 1
+    referenceFontSize: 12
+  sharedSettings: {fileID: 0}
+  animationLoop: 0
+  databaseEffects: {fileID: 0}
+  styleSheet: {fileID: 0}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
