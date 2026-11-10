@@ -157,9 +157,9 @@ MonoBehaviour:
   dragThreshold: 8
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
   selectedTextAnimator: {fileID: 574250880}
-  selectionEffectTag: bounceCustom
-  correctSelectionEffectTag: waveCustom
-  revealBackEffectTag: bounceCustom
+  selectionEffectTag: selectionEffect
+  correctSelectionEffectTag: correctSelectionEffect
+  revealBackEffectTag: revealBackEffect
   revealBackPerCharDelay: 0.015
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
