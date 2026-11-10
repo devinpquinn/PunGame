@@ -24,7 +24,7 @@ MonoBehaviour:
     phaseParams:
       charOffset: 0
       wordOffset: 0
-      speed: 1.5
+      speed: 2
     stateCurve: {fileID: 11400000, guid: f685be639a31f4498bd52900aaf6418f, type: 2}
     playback: {fileID: 11400000, guid: 70d5b5db9762743afa895ebe0e9ea4cb, type: 2}
   persistent:
