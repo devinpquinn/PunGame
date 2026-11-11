@@ -214,7 +214,7 @@ public class GameController : MonoBehaviour
             ? sentenceClip
             : (sentenceAudioSource != null ? sentenceAudioSource.clip : null);
 
-        if (PlayClip(clip)) SetPlayButtonVisual(pressed: true);
+        PlayClip(clip);
     }
 
     bool PlayClip(AudioClip clip)
@@ -225,6 +225,7 @@ public class GameController : MonoBehaviour
         sentenceAudioSource.Play();
         wasAudioPlaying = true;
         if (playButton != null) playButton.interactable = false;
+        SetPlayButtonVisual(pressed: true);
         return true;
     }
 
