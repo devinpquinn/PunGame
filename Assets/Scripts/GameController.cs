@@ -388,7 +388,7 @@ public class GameController : MonoBehaviour
         }
         else
         {
-            SetSelecting(false);
+            EndSelectingVisuals();
             FadeOutSelectionBox();
         }
     }
@@ -650,7 +650,7 @@ public class GameController : MonoBehaviour
         }
 
         // Cancel any in-progress crossfade and return to the full-sentence view instantly.
-        StopCoroutine(nameof(CrossfadeToSelectingRoutine));
+        StopCrossfades();
 
         sentenceText.gameObject.SetActive(true);
         deemphasizedText.gameObject.SetActive(false);
@@ -673,7 +673,7 @@ public class GameController : MonoBehaviour
         // (and later animates) the characters it manages.
         if (selectedTextAnimator != null) selectedTextAnimator.enabled = true;
 
-        StopCoroutine(nameof(CrossfadeToSelectingRoutine));
+        StopCrossfades();
 
         SetGroupAlpha(sentenceTextCanvasGroup, 1f);
         SetGroupAlpha(deemphasizedTextCanvasGroup, 0f);
@@ -713,6 +713,69 @@ public class GameController : MonoBehaviour
         SetGroupAlpha(selectedTextCanvasGroup, 1f);
         sentenceText.gameObject.SetActive(false);
         SetGroupAlpha(sentenceTextCanvasGroup, 1f);
+    }
+
+    // Reverses the selecting crossfade: fades the full sentence back in over the still-visible
+    // deemphasized/selected text when an incorrect selection is released, then tears the
+    // selecting visuals down. The animator stays enabled until the fade finishes so the
+    // selected characters keep rendering while they fade out.
+    void EndSelectingVisuals()
+    {
+        isSelecting = false;
+
+        sentenceText.gameObject.SetActive(true);
+        deemphasizedText.gameObject.SetActive(true);
+        selectedText.gameObject.SetActive(true);
+
+        StopCrossfades();
+
+        SetGroupAlpha(sentenceTextCanvasGroup, 0f);
+        SetGroupAlpha(deemphasizedTextCanvasGroup, 1f);
+        SetGroupAlpha(selectedTextCanvasGroup, 1f);
+
+        if (selectionCrossfadeDuration > 0f && gameObject.activeInHierarchy)
+        {
+            StartCoroutine(nameof(CrossfadeToDeselectedRoutine));
+        }
+        else
+        {
+            FinishDeselectingCrossfade();
+        }
+    }
+
+    IEnumerator CrossfadeToDeselectedRoutine()
+    {
+        float elapsed = 0f;
+        while (elapsed < selectionCrossfadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / selectionCrossfadeDuration);
+            SetGroupAlpha(sentenceTextCanvasGroup, t);
+            SetGroupAlpha(deemphasizedTextCanvasGroup, 1f - t);
+            SetGroupAlpha(selectedTextCanvasGroup, 1f - t);
+            yield return null;
+        }
+
+        FinishDeselectingCrossfade();
+    }
+
+    // Settles the reverse crossfade: the full sentence fully opaque and the selecting texts
+    // hidden (with their alphas restored for the next selection).
+    void FinishDeselectingCrossfade()
+    {
+        sentenceText.gameObject.SetActive(true);
+        SetGroupAlpha(sentenceTextCanvasGroup, 1f);
+        deemphasizedText.gameObject.SetActive(false);
+        selectedText.gameObject.SetActive(false);
+        SetGroupAlpha(deemphasizedTextCanvasGroup, 1f);
+        SetGroupAlpha(selectedTextCanvasGroup, 1f);
+        if (selectedTextAnimator != null) selectedTextAnimator.enabled = false;
+    }
+
+    void StopCrossfades()
+    {
+        StopCoroutine(nameof(CrossfadeToSelectingRoutine));
+        StopCoroutine(nameof(CrossfadeToDeselectedRoutine));
     }
 
     static void SetGroupAlpha(CanvasGroup group, float alpha)
