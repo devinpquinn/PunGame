@@ -154,7 +154,9 @@ MonoBehaviour:
   selectedText: {fileID: 574250878}
   sentenceWidthTarget: {fileID: 2134669843}
   selectionBox: {fileID: 1342910069}
-  dragThreshold: 8
+  selectionBoxCanvasGroup: {fileID: 1342910072}
+  selectionBoxFadeDuration: 0.1
+  dragThreshold: 50
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
   selectedTextAnimator: {fileID: 574250880}
   selectionEffectTag: selectionEffect
@@ -1212,6 +1214,7 @@ GameObject:
   - component: {fileID: 1342910069}
   - component: {fileID: 1342910071}
   - component: {fileID: 1342910070}
+  - component: {fileID: 1342910072}
   m_Layer: 5
   m_Name: SelectionBox
   m_TagString: Untagged
@@ -1277,6 +1280,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1342910068}
   m_CullTransparentMesh: 1
+--- !u!225 &1342910072
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342910068}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1527208572
 GameObject:
   m_ObjectHideFlags: 0

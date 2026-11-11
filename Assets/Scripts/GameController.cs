@@ -20,6 +20,10 @@ public class GameController : MonoBehaviour
     [SerializeField] RectTransform sentenceWidthTarget;
     [Tooltip("Optional visual for the selection box (e.g. a semi-transparent Image).")]
     [SerializeField] RectTransform selectionBox;
+    [Tooltip("Canvas Group on the selection box, faded out when a selection is released. If unset, it is looked up on the selection box.")]
+    [SerializeField] CanvasGroup selectionBoxCanvasGroup;
+    [Tooltip("Seconds the selection box takes to fade out after the mouse is released. The player cannot start a new selection until the fade completes.")]
+    [SerializeField] float selectionBoxFadeDuration = 0.2f;
     [Tooltip("Pixels the mouse must move while held before selection starts.")]
     [SerializeField] float dragThreshold = 8f;
     [Tooltip("Color of the selected text while a correct selection's audio plays.")]
@@ -67,6 +71,7 @@ public class GameController : MonoBehaviour
     bool isSelecting;
     bool wasAudioPlaying;
     bool isResolving;
+    bool isFadingSelectionBox;
 
     readonly List<ClueRuntime> clueRuntimes = new List<ClueRuntime>();
     int pendingSolveIndex = -1;
@@ -105,6 +110,9 @@ public class GameController : MonoBehaviour
         if (selectionBox != null)
         {
             selectionBox.anchorMin = selectionBox.anchorMax = selectionBox.pivot = new Vector2(0.5f, 0.5f);
+            if (selectionBoxCanvasGroup == null)
+                selectionBoxCanvasGroup = selectionBox.GetComponent<CanvasGroup>();
+            selectionBox.gameObject.SetActive(false);
         }
 
         if (playButton != null) playButton.onClick.AddListener(PlaySentence);
@@ -244,7 +252,7 @@ public class GameController : MonoBehaviour
 
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
-        if (isResolving) return;
+        if (isResolving || isFadingSelectionBox) return;
 
         Vector2 mousePos = mouse.position.ReadValue();
 
@@ -274,6 +282,7 @@ public class GameController : MonoBehaviour
     {
         sourceSelected = new bool[sentence.Length];
         SetSelecting(true);
+        ShowSelectionBox();
         PrepareSelectedTextEffect();
         RebuildTexts();
 
@@ -357,7 +366,7 @@ public class GameController : MonoBehaviour
         {
             // Correct answer: keep the selection visible and resolve once the clip finishes.
             isSelecting = false;
-            if (selectionBox != null) selectionBox.gameObject.SetActive(false);
+            FadeOutSelectionBox();
             selectedText.color = correctSelectionColor;
             ApplyCorrectSelectionEffect();
 
@@ -369,6 +378,7 @@ public class GameController : MonoBehaviour
         else
         {
             SetSelecting(false);
+            FadeOutSelectionBox();
         }
     }
 
@@ -627,6 +637,46 @@ public class GameController : MonoBehaviour
         // The animator must be enabled while the selected text is shown so it reveals
         // (and later animates) the characters it manages.
         if (selectedTextAnimator != null) selectedTextAnimator.enabled = selecting;
-        if (selectionBox != null) selectionBox.gameObject.SetActive(selecting);
+    }
+
+    // Shows the selection box fully opaque, cancelling any in-progress fade-out.
+    void ShowSelectionBox()
+    {
+        if (selectionBox == null) return;
+        StopCoroutine(nameof(FadeSelectionBoxRoutine));
+        isFadingSelectionBox = false;
+        if (selectionBoxCanvasGroup != null) selectionBoxCanvasGroup.alpha = 1f;
+        selectionBox.gameObject.SetActive(true);
+    }
+
+    // Fades the selection box out, blocking new selections until the fade completes.
+    void FadeOutSelectionBox()
+    {
+        if (selectionBox == null) return;
+        StopCoroutine(nameof(FadeSelectionBoxRoutine));
+        StartCoroutine(nameof(FadeSelectionBoxRoutine));
+    }
+
+    IEnumerator FadeSelectionBoxRoutine()
+    {
+        isFadingSelectionBox = true;
+
+        if (selectionBoxCanvasGroup != null && selectionBoxFadeDuration > 0f)
+        {
+            float startAlpha = selectionBoxCanvasGroup.alpha;
+            float elapsed = 0f;
+            while (elapsed < selectionBoxFadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / selectionBoxFadeDuration);
+                selectionBoxCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+                yield return null;
+            }
+            selectionBoxCanvasGroup.alpha = 0f;
+        }
+
+        selectionBox.gameObject.SetActive(false);
+        if (selectionBoxCanvasGroup != null) selectionBoxCanvasGroup.alpha = 1f;
+        isFadingSelectionBox = false;
     }
 }
