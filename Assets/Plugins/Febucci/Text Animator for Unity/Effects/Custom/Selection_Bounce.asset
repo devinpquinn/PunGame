@@ -20,7 +20,7 @@ MonoBehaviour:
   appearance:
     stateParams:
       direction: {x: 0, y: 1, z: 0}
-      amplitude: 1
+      amplitude: 0.5
     phaseParams:
       charOffset: 0
       wordOffset: 0
