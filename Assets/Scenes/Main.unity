@@ -156,6 +156,7 @@ MonoBehaviour:
   selectionBox: {fileID: 1342910069}
   selectionBoxCanvasGroup: {fileID: 1342910072}
   selectionBoxFadeDuration: 0.1
+  selectionCrossfadeDuration: 0.1
   dragThreshold: 50
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
   selectedTextAnimator: {fileID: 574250880}
@@ -337,6 +338,7 @@ GameObject:
   - component: {fileID: 574250879}
   - component: {fileID: 574250878}
   - component: {fileID: 574250880}
+  - component: {fileID: 574250881}
   m_Layer: 5
   m_Name: Text_Emphasized
   m_TagString: Untagged
@@ -491,6 +493,18 @@ MonoBehaviour:
   animationLoop: 0
   databaseEffects: {fileID: 0}
   styleSheet: {fileID: 0}
+--- !u!225 &574250881
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 574250876}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1407,6 +1421,7 @@ GameObject:
   - component: {fileID: 1533115800}
   - component: {fileID: 1533115802}
   - component: {fileID: 1533115801}
+  - component: {fileID: 1533115803}
   m_Layer: 5
   m_Name: Text_Inset
   m_TagString: Untagged
@@ -1533,6 +1548,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1533115799}
   m_CullTransparentMesh: 1
+--- !u!225 &1533115803
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1533115799}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1608977716
 GameObject:
   m_ObjectHideFlags: 0
@@ -1544,6 +1571,7 @@ GameObject:
   - component: {fileID: 1608977717}
   - component: {fileID: 1608977719}
   - component: {fileID: 1608977718}
+  - component: {fileID: 1608977720}
   m_Layer: 5
   m_Name: Text_BG
   m_TagString: Untagged
@@ -1670,6 +1698,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1608977716}
   m_CullTransparentMesh: 1
+--- !u!225 &1608977720
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608977716}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1616859680
 GameObject:
   m_ObjectHideFlags: 0

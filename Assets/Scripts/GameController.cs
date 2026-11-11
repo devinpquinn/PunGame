@@ -24,6 +24,8 @@ public class GameController : MonoBehaviour
     [SerializeField] CanvasGroup selectionBoxCanvasGroup;
     [Tooltip("Seconds the selection box takes to fade out after the mouse is released. The player cannot start a new selection until the fade completes.")]
     [SerializeField] float selectionBoxFadeDuration = 0.2f;
+    [Tooltip("Seconds the full sentence takes to crossfade into the deemphasized/selected text when a selection begins. Set to 0 to switch instantly.")]
+    [SerializeField] float selectionCrossfadeDuration = 0.15f;
     [Tooltip("Pixels the mouse must move while held before selection starts.")]
     [SerializeField] float dragThreshold = 8f;
     [Tooltip("Color of the selected text while a correct selection's audio plays.")]
@@ -73,6 +75,10 @@ public class GameController : MonoBehaviour
     bool isResolving;
     bool isFadingSelectionBox;
 
+    CanvasGroup sentenceTextCanvasGroup;
+    CanvasGroup deemphasizedTextCanvasGroup;
+    CanvasGroup selectedTextCanvasGroup;
+
     readonly List<ClueRuntime> clueRuntimes = new List<ClueRuntime>();
     int pendingSolveIndex = -1;
 
@@ -103,6 +109,10 @@ public class GameController : MonoBehaviour
             selectedTextAnimator = selectedText.GetComponent<TextAnimator_TMP>();
         // The animator is only enabled while a correct selection plays its effect.
         if (selectedTextAnimator != null) selectedTextAnimator.enabled = false;
+
+        sentenceTextCanvasGroup = GetOrAddCanvasGroup(sentenceText);
+        deemphasizedTextCanvasGroup = GetOrAddCanvasGroup(deemphasizedText);
+        selectedTextCanvasGroup = GetOrAddCanvasGroup(selectedText);
 
         Canvas canvas = sentenceText.canvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -632,12 +642,89 @@ public class GameController : MonoBehaviour
     void SetSelecting(bool selecting)
     {
         isSelecting = selecting;
-        sentenceText.gameObject.SetActive(!selecting);
-        deemphasizedText.gameObject.SetActive(selecting);
-        selectedText.gameObject.SetActive(selecting);
+
+        if (selecting)
+        {
+            BeginSelectingVisuals();
+            return;
+        }
+
+        // Cancel any in-progress crossfade and return to the full-sentence view instantly.
+        StopCoroutine(nameof(CrossfadeToSelectingRoutine));
+
+        sentenceText.gameObject.SetActive(true);
+        deemphasizedText.gameObject.SetActive(false);
+        selectedText.gameObject.SetActive(false);
+        SetGroupAlpha(sentenceTextCanvasGroup, 1f);
+        SetGroupAlpha(deemphasizedTextCanvasGroup, 1f);
+        SetGroupAlpha(selectedTextCanvasGroup, 1f);
+        if (selectedTextAnimator != null) selectedTextAnimator.enabled = false;
+    }
+
+    // Shows the selecting visuals (deemphasized + selected text), crossfading them in over
+    // the still-visible full sentence so the switch isn't an instant pop. The objects are
+    // activated immediately so selection logic can run while the fade plays.
+    void BeginSelectingVisuals()
+    {
+        sentenceText.gameObject.SetActive(true);
+        deemphasizedText.gameObject.SetActive(true);
+        selectedText.gameObject.SetActive(true);
         // The animator must be enabled while the selected text is shown so it reveals
         // (and later animates) the characters it manages.
-        if (selectedTextAnimator != null) selectedTextAnimator.enabled = selecting;
+        if (selectedTextAnimator != null) selectedTextAnimator.enabled = true;
+
+        StopCoroutine(nameof(CrossfadeToSelectingRoutine));
+
+        SetGroupAlpha(sentenceTextCanvasGroup, 1f);
+        SetGroupAlpha(deemphasizedTextCanvasGroup, 0f);
+        SetGroupAlpha(selectedTextCanvasGroup, 0f);
+
+        if (selectionCrossfadeDuration > 0f && gameObject.activeInHierarchy)
+        {
+            StartCoroutine(nameof(CrossfadeToSelectingRoutine));
+        }
+        else
+        {
+            FinishSelectingCrossfade();
+        }
+    }
+
+    IEnumerator CrossfadeToSelectingRoutine()
+    {
+        float elapsed = 0f;
+        while (elapsed < selectionCrossfadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / selectionCrossfadeDuration);
+            SetGroupAlpha(sentenceTextCanvasGroup, 1f - t);
+            SetGroupAlpha(deemphasizedTextCanvasGroup, t);
+            SetGroupAlpha(selectedTextCanvasGroup, t);
+            yield return null;
+        }
+
+        FinishSelectingCrossfade();
+    }
+
+    // Settles the crossfade on its final state: selecting texts fully opaque and the now
+    // occluded full sentence hidden (with its alpha restored for the next selection).
+    void FinishSelectingCrossfade()
+    {
+        SetGroupAlpha(deemphasizedTextCanvasGroup, 1f);
+        SetGroupAlpha(selectedTextCanvasGroup, 1f);
+        sentenceText.gameObject.SetActive(false);
+        SetGroupAlpha(sentenceTextCanvasGroup, 1f);
+    }
+
+    static void SetGroupAlpha(CanvasGroup group, float alpha)
+    {
+        if (group != null) group.alpha = alpha;
+    }
+
+    static CanvasGroup GetOrAddCanvasGroup(TMP_Text text)
+    {
+        if (text == null) return null;
+        CanvasGroup group = text.GetComponent<CanvasGroup>();
+        return group != null ? group : text.gameObject.AddComponent<CanvasGroup>();
     }
 
     // Shows the selection box fully opaque, cancelling any in-progress fade-out.
