@@ -478,6 +478,9 @@ public class GameController : MonoBehaviour
         }
 
         foreground.enabled = true;
+        // When revealing, the foreground still holds its old text until the animator's next
+        // update applies the hidden text below, so keep it transparent for that one frame.
+        if (showForeground) StartCoroutine(HideForOneFrame(foreground));
         animator.enabled = true;
         animator.SetAppearancesActive(true);
         animator.SetText(showForeground ? WrapAppearance(text, effectTag) : WrapDisappearance(text, effectTag), hideText: showForeground);
@@ -533,6 +536,13 @@ public class GameController : MonoBehaviour
             backgroundHidden[i] = hidden;
         background.text = MaskText(backgroundText, backgroundHidden);
         return to;
+    }
+
+    static IEnumerator HideForOneFrame(TMP_Text text)
+    {
+        text.canvasRenderer.SetAlpha(0f);
+        yield return null;
+        text.canvasRenderer.SetAlpha(1f);
     }
 
     static TextAnimator_TMP GetOrAddTextAnimator(TMP_Text text)
