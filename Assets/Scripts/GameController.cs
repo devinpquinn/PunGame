@@ -431,15 +431,21 @@ public class GameController : MonoBehaviour
         ClueRuntime rt = clueRuntimes[index];
         rt.solved = true;
 
-        // A solved clue transitions out to its de-emphasized text, while its answer
-        // transitions in, emphasized and showing its real text.
-        StartCoroutine(TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag));
-        StartCoroutine(TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag));
+        StartCoroutine(TransitionClueToAnswer(rt));
 
         // Animate the remaining (non-selected) characters back in before returning to the
         // plain sentence view. The coroutine also eases the highlight color back to default.
         isResolving = true;
         StartCoroutine(AnimateRemainingTextIn(FinishResolve));
+    }
+
+    // A solved clue transitions out to its de-emphasized text, then, once it has fully
+    // animated out, its answer transitions in, emphasized and showing its real text, so the
+    // clue appears to flow into the answer.
+    IEnumerator TransitionClueToAnswer(ClueRuntime rt)
+    {
+        yield return TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag);
+        yield return TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag);
     }
 
     // Swaps a clue/answer between its background and foreground text one character at a
