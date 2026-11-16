@@ -61,6 +61,12 @@ public class GameController : MonoBehaviour
     [SerializeField] GameObject cluePrefab;
     [Tooltip("Prefab spawned for each answer. Must contain a TMP_Text.")]
     [SerializeField] GameObject answerPrefab;
+    [Tooltip("Text Animator disappearance effect tag played on each clue character as a solved clue transitions out (e.g. fade). Uses a Text Animator on the clue's foreground text, added at runtime if missing.")]
+    [SerializeField] string clueOutEffectTag = "fade";
+    [Tooltip("Text Animator appearance effect tag played on each answer character as a solved answer transitions in (e.g. fade). Uses a Text Animator on the answer's foreground text, added at runtime if missing.")]
+    [SerializeField] string answerInEffectTag = "fade";
+    [Tooltip("Delay between each character as a solved clue transitions out and its answer transitions in. Set to 0 to transition all characters at once.")]
+    [SerializeField] float clueTransitionPerCharDelay = 0.03f;
 
     Camera uiCamera;
     Color selectedTextDefaultColor;
@@ -425,17 +431,100 @@ public class GameController : MonoBehaviour
         ClueRuntime rt = clueRuntimes[index];
         rt.solved = true;
 
-        // A solved clue is de-emphasized.
-        SetEmphasis(rt.clueBackground, rt.clueForeground, emphasized: false);
-
-        // A solved answer is emphasized and reveals its real text.
-        SetText(rt.answerBackground, rt.answerForeground, rt.data.answerText);
-        SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: true);
+        // A solved clue transitions out to its de-emphasized text, while its answer
+        // transitions in, emphasized and showing its real text.
+        StartCoroutine(TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag));
+        StartCoroutine(TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag));
 
         // Animate the remaining (non-selected) characters back in before returning to the
         // plain sentence view. The coroutine also eases the highlight color back to default.
         isResolving = true;
         StartCoroutine(AnimateRemainingTextIn(FinishResolve));
+    }
+
+    // Swaps a clue/answer between its background and foreground text one character at a
+    // time, left to right. When showing the foreground, each character is revealed with the
+    // effect's appearance ({tag}) while its background counterpart is hidden; when hiding the
+    // foreground, each character plays the effect's disappearance ({#tag}) while its
+    // background counterpart is shown. This mirrors how the sentence's reveal-back effect
+    // swaps characters between the selected and deemphasized texts.
+    IEnumerator TransitionClueText(TMP_Text background, TMP_Text foreground, string text, bool showForeground, string effectTag)
+    {
+        text = text ?? string.Empty;
+        TextAnimator_TMP animator = GetOrAddTextAnimator(foreground);
+        if (animator == null)
+        {
+            SetText(background, foreground, text);
+            SetEmphasis(background, foreground, showForeground);
+            yield break;
+        }
+
+        int n = text.Length;
+        string backgroundText = background != null ? background.text : string.Empty;
+        // The background starts fully shown when revealing the foreground, and fully hidden
+        // (behind the still-visible foreground) when hiding it.
+        bool[] backgroundHidden = new bool[backgroundText.Length];
+        for (int i = 0; i < backgroundHidden.Length; i++) backgroundHidden[i] = !showForeground;
+        if (background != null)
+        {
+            background.text = MaskText(backgroundText, backgroundHidden);
+            background.enabled = true;
+        }
+
+        foreground.enabled = true;
+        animator.enabled = true;
+        animator.SetAppearancesActive(true);
+        animator.SetText(showForeground ? WrapAppearance(text, effectTag) : WrapDisappearance(text, effectTag), hideText: showForeground);
+        animator.FirstVisibleCharacter = 0;
+        animator.MaxVisibleCharacters = n;
+
+        for (int i = 0; i < n; i++)
+        {
+            animator.SetVisibilityChar(i, showForeground, canPlayEffects: true);
+            if (background != null && i < backgroundHidden.Length)
+            {
+                backgroundHidden[i] = showForeground;
+                background.text = MaskText(backgroundText, backgroundHidden);
+            }
+
+            // Don't pause on whitespace, which has nothing to animate.
+            if (clueTransitionPerCharDelay > 0f && !char.IsWhiteSpace(text[i]))
+                yield return new WaitForSeconds(clueTransitionPerCharDelay);
+        }
+
+        // Wait for every appearance/disappearance effect to finish.
+        if (showForeground)
+            while (!animator.allLettersShown) yield return null;
+        else
+            while (animator.anyLetterVisible) yield return null;
+
+        if (background != null) background.text = text;
+        SetEmphasis(background, foreground, showForeground);
+        // A shown foreground keeps its animator enabled so it keeps rendering its characters.
+        if (!showForeground) animator.enabled = false;
+    }
+
+    static TextAnimator_TMP GetOrAddTextAnimator(TMP_Text text)
+    {
+        if (text == null) return null;
+        TextAnimator_TMP animator = text.GetComponent<TextAnimator_TMP>();
+        return animator != null ? animator : text.gameObject.AddComponent<TextAnimator_TMP>();
+    }
+
+    // Wraps hidden characters of plain text in a transparent color tag.
+    static string MaskText(string text, bool[] hidden)
+    {
+        var sb = new StringBuilder(text.Length + 32);
+        bool hiding = false;
+        for (int i = 0; i < text.Length; i++)
+        {
+            bool shouldHide = i < hidden.Length && hidden[i];
+            if (hiding && !shouldHide) { sb.Append(HideCloseTag); hiding = false; }
+            if (!hiding && shouldHide) { sb.Append(HideOpenTag); hiding = true; }
+            sb.Append(text[i]);
+        }
+        if (hiding) sb.Append(HideCloseTag);
+        return sb.ToString();
     }
 
     // Reveals the characters that were not part of the selection, playing the reveal
@@ -583,11 +672,14 @@ public class GameController : MonoBehaviour
     }
 
     // Text Animator effect tags: behaviors (continuous) use angle brackets, appearances
-    // (one-shot, played when a character is revealed) use curly brackets.
+    // (one-shot, played when a character is revealed) use curly brackets, and
+    // disappearances (one-shot, played when a character is hidden) use {#tag}.
     static string BehaviorOpen(string tag) => string.IsNullOrEmpty(tag) ? null : "<" + tag + ">";
     static string BehaviorClose(string tag) => string.IsNullOrEmpty(tag) ? null : "</" + tag + ">";
     static string WrapAppearance(string text, string tag)
         => string.IsNullOrEmpty(tag) ? text : "{" + tag + "}" + text + "{/}";
+    static string WrapDisappearance(string text, string tag)
+        => string.IsNullOrEmpty(tag) ? text : "{#" + tag + "}" + text + "{/#" + tag + "}";
 
     // The selected text is routed through Text Animator (when present) so it manages
     // character visibility itself; assigning its TMP text directly would leave the
