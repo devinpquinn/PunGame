@@ -484,18 +484,32 @@ public class GameController : MonoBehaviour
         animator.FirstVisibleCharacter = 0;
         animator.MaxVisibleCharacters = n;
 
+        // The animator applies visibility changes on its next update (coroutines resume after
+        // Update), while the background TMP text rebuilds this frame. Each background change is
+        // therefore deferred one frame so both texts change on the same rendered frame.
+        int backgroundSynced = 0;
         for (int i = 0; i < n; i++)
         {
             animator.SetVisibilityChar(i, showForeground, canPlayEffects: true);
-            if (background != null && i < backgroundHidden.Length)
-            {
-                backgroundHidden[i] = showForeground;
-                background.text = MaskText(backgroundText, backgroundHidden);
-            }
 
             // Don't pause on whitespace, which has nothing to animate.
-            if (clueTransitionPerCharDelay > 0f && !char.IsWhiteSpace(text[i]))
-                yield return new WaitForSeconds(clueTransitionPerCharDelay);
+            if (clueTransitionPerCharDelay <= 0f || char.IsWhiteSpace(text[i])) continue;
+
+            yield return null;
+            backgroundSynced = SyncBackground(background, backgroundText, backgroundHidden, backgroundSynced, i + 1, showForeground);
+
+            float elapsed = Time.deltaTime;
+            while (elapsed < clueTransitionPerCharDelay)
+            {
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+        }
+
+        if (backgroundSynced < n)
+        {
+            yield return null;
+            SyncBackground(background, backgroundText, backgroundHidden, backgroundSynced, n, showForeground);
         }
 
         // Wait for every appearance/disappearance effect to finish.
@@ -508,6 +522,17 @@ public class GameController : MonoBehaviour
         SetEmphasis(background, foreground, showForeground);
         // A shown foreground keeps its animator enabled so it keeps rendering its characters.
         if (!showForeground) animator.enabled = false;
+    }
+
+    // Sets the background's hidden flags for characters [from, to) and re-masks its text.
+    // Returns 'to' as the new count of synced characters.
+    static int SyncBackground(TMP_Text background, string backgroundText, bool[] backgroundHidden, int from, int to, bool hidden)
+    {
+        if (background == null) return to;
+        for (int i = from; i < to && i < backgroundHidden.Length; i++)
+            backgroundHidden[i] = hidden;
+        background.text = MaskText(backgroundText, backgroundHidden);
+        return to;
     }
 
     static TextAnimator_TMP GetOrAddTextAnimator(TMP_Text text)
@@ -572,6 +597,10 @@ public class GameController : MonoBehaviour
         selectedText.color = correctSelectionColor;
         float spreadDuration = maxDistance * Mathf.Max(0f, revealBackPerCharDelay);
         float elapsed = 0f;
+        // The animator applies visibility changes on its next update (coroutines resume after
+        // Update), while the deemphasized TMP text rebuilds this frame. Its masking is
+        // therefore deferred one frame so both texts change on the same rendered frame.
+        bool deemphasizedPending = false;
 
         for (int d = 1; d <= maxDistance; d++)
         {
@@ -585,7 +614,7 @@ public class GameController : MonoBehaviour
             }
             if (!revealedAny) continue;
 
-            deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
+            deemphasizedPending = true;
 
             // Advance one spread step, easing the color toward default as time passes.
             float stepEnd = elapsed + revealBackPerCharDelay;
@@ -595,7 +624,19 @@ public class GameController : MonoBehaviour
                 float t = spreadDuration > 0f ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / spreadDuration)) : 1f;
                 selectedText.color = Color.Lerp(correctSelectionColor, selectedTextDefaultColor, t);
                 yield return null;
+
+                if (deemphasizedPending)
+                {
+                    deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
+                    deemphasizedPending = false;
+                }
             }
+        }
+
+        if (deemphasizedPending)
+        {
+            yield return null;
+            deemphasizedText.text = BuildMaskedSentence(hideSelected: true, alsoHide: revealedBack);
         }
 
         selectedText.color = selectedTextDefaultColor;
