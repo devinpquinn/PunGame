@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 161459912}
   - component: {fileID: 161459911}
+  - component: {fileID: 161459913}
   m_Layer: 0
   m_Name: MANAGER
   m_TagString: Untagged
@@ -192,6 +193,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &161459913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161459910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e132ef095d3bb124b9d0301aa82e609a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  outputMixerGroup: {fileID: 7636835583985096030, guid: 59403da47a09f2849b9105199833ce5e, type: 2}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
