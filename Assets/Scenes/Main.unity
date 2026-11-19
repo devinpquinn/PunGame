@@ -165,7 +165,10 @@ MonoBehaviour:
   correctSelectionEffectTag: correctSelectionEffect
   revealBackEffectTag: revealBackEffect
   revealBackPerCharDelay: 0.03
-  revealStepClip: {fileID: 8300000, guid: c8e11da5b22103b49ade6b14792cd2ce, type: 3}
+  revealStepClips:
+  - {fileID: 8300000, guid: 90dba24f578b3c040ae3c74fad4e07a5, type: 3}
+  - {fileID: 8300000, guid: 753ff260331d1194c874f79a657cde1c, type: 3}
+  - {fileID: 8300000, guid: f9cb937ac4f3c9f43ad16febd1a76d2a, type: 3}
   revealStepVolume: 0.5
   revealStepStartSemitones: 0
   revealStepRiseSemitones: 12

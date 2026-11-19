@@ -41,8 +41,8 @@ public class GameController : MonoBehaviour
     [SerializeField] string revealBackEffectTag = "fade";
     [Tooltip("Delay between each step as the remaining text spreads outward from the selection. Set to 0 to reveal it all at once.")]
     [SerializeField] float revealBackPerCharDelay = 0.03f;
-    [Tooltip("Short sound played on each step as the remaining text spreads outward from the selection. Its pitch rises with each step. Leave unset for no sound.")]
-    [SerializeField] AudioClip revealStepClip;
+    [Tooltip("Short sounds played on each step as the remaining text spreads outward from the selection. One is chosen at random per step (never the same clip twice in a row), and its pitch rises with each step. Leave empty for no sound.")]
+    [SerializeField] List<AudioClip> revealStepClips = new List<AudioClip>();
     [Tooltip("Volume of each reveal step sound.")]
     [SerializeField, Range(0f, 1f)] float revealStepVolume = 0.5f;
     [Tooltip("Pitch of the first reveal step, in semitones relative to the clip's original pitch.")]
@@ -745,11 +745,14 @@ public class GameController : MonoBehaviour
 
     static readonly int[] PentatonicSemitones = { 0, 2, 4, 7, 9 };
 
+    AudioClip lastRevealStepClip;
+
     // Plays the reveal step sound for spread step 'step' (1-based) of 'totalSteps', with
     // its pitch rising across the spread.
     void PlayRevealStepSound(int step, int totalSteps)
     {
-        if (revealStepClip == null) return;
+        AudioClip clip = PickRevealStepClip();
+        if (clip == null) return;
 
         float progress = totalSteps > 1 ? (step - 1) / (float)(totalSteps - 1) : 0f;
         float semitones = progress * revealStepRiseSemitones;
@@ -757,7 +760,29 @@ public class GameController : MonoBehaviour
             semitones = SnapToPentatonic(semitones);
 
         float pitch = Mathf.Pow(2f, (revealStepStartSemitones + semitones) / 12f);
-        SoundManager.PlayClip(revealStepClip, revealStepVolume, pitch);
+        SoundManager.PlayClip(clip, revealStepVolume, pitch);
+    }
+
+    // Picks a random non-null reveal step clip, avoiding the one played last when possible.
+    AudioClip PickRevealStepClip()
+    {
+        if (revealStepClips == null) return null;
+
+        int candidateCount = 0;
+        for (int i = 0; i < revealStepClips.Count; i++)
+            if (revealStepClips[i] != null && revealStepClips[i] != lastRevealStepClip) candidateCount++;
+
+        // Only one distinct clip is available, so repeating it is unavoidable.
+        if (candidateCount == 0) return lastRevealStepClip != null && revealStepClips.Contains(lastRevealStepClip) ? lastRevealStepClip : null;
+
+        int pick = Random.Range(0, candidateCount);
+        for (int i = 0; i < revealStepClips.Count; i++)
+        {
+            AudioClip c = revealStepClips[i];
+            if (c == null || c == lastRevealStepClip) continue;
+            if (pick-- == 0) { lastRevealStepClip = c; return c; }
+        }
+        return null;
     }
 
     // Rounds a semitone offset down to the nearest major pentatonic scale degree.
