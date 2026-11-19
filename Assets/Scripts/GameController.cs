@@ -194,6 +194,53 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // Cancels any in-progress selection, audio, or transition and returns every clue and
+    // answer to its unsolved state.
+    void RestartPuzzle()
+    {
+        StopAllCoroutines();
+
+        if (sentenceAudioSource != null) sentenceAudioSource.Stop();
+        wasAudioPlaying = false;
+        pendingSolveIndex = -1;
+        if (playButton != null) playButton.interactable = true;
+        SetPlayButtonVisual(pressed: false);
+
+        isPressPending = false;
+        isResolving = false;
+        isFadingSelectionBox = false;
+        if (selectionBox != null)
+        {
+            if (selectionBoxCanvasGroup != null) selectionBoxCanvasGroup.alpha = 1f;
+            selectionBox.gameObject.SetActive(false);
+        }
+
+        selectedText.color = selectedTextDefaultColor;
+        SetSelecting(false);
+
+        foreach (ClueRuntime rt in clueRuntimes)
+        {
+            rt.solved = false;
+            ResetClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, emphasized: true);
+            ResetClueText(rt.answerBackground, rt.answerForeground, Obfuscate(rt.data.answerText), emphasized: false);
+        }
+    }
+
+    static void ResetClueText(TMP_Text background, TMP_Text foreground, string text, bool emphasized)
+    {
+        if (foreground != null)
+        {
+            TextAnimator_TMP animator = foreground.GetComponent<TextAnimator_TMP>();
+            if (animator != null) animator.enabled = false;
+            // A transition may have been interrupted mid HideForOneFrame.
+            foreground.canvasRenderer.SetAlpha(1f);
+        }
+
+        SetText(background, foreground, text ?? string.Empty);
+        if (foreground != null) foreground.ForceMeshUpdate(true, true);
+        SetEmphasis(background, foreground, emphasized);
+    }
+
     // The regular (root) object holds the background text; its child holds the foreground text.
     static void GetTexts(GameObject go, out TMP_Text background, out TMP_Text foreground)
     {
@@ -263,6 +310,13 @@ public class GameController : MonoBehaviour
 
     void Update()
     {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
+        {
+            RestartPuzzle();
+            return;
+        }
+
         if (wasAudioPlaying && !IsAudioPlaying)
         {
             wasAudioPlaying = false;
