@@ -228,17 +228,37 @@ public class GameController : MonoBehaviour
 
     static void ResetClueText(TMP_Text background, TMP_Text foreground, string text, bool emphasized)
     {
-        if (foreground != null)
+        text = text ?? string.Empty;
+        TextAnimator_TMP animator = foreground != null ? foreground.GetComponent<TextAnimator_TMP>() : null;
+
+        // A transition may have been interrupted mid HideForOneFrame.
+        if (foreground != null) foreground.canvasRenderer.SetAlpha(1f);
+        SetEmphasis(background, foreground, emphasized);
+
+        if (animator == null)
         {
-            TextAnimator_TMP animator = foreground.GetComponent<TextAnimator_TMP>();
-            if (animator != null) animator.enabled = false;
-            // A transition may have been interrupted mid HideForOneFrame.
-            foreground.canvasRenderer.SetAlpha(1f);
+            SetText(background, foreground, text);
+            return;
         }
 
-        SetText(background, foreground, text ?? string.Empty);
-        if (foreground != null) foreground.ForceMeshUpdate(true, true);
-        SetEmphasis(background, foreground, emphasized);
+        if (background != null) background.text = text;
+
+        if (!emphasized)
+        {
+            // The foreground is hidden; the next transition re-enables and reloads the animator.
+            animator.enabled = false;
+            foreground.text = text;
+            return;
+        }
+
+        // Once Text Animator has driven a TMP text it stops TMP from rendering on its own
+        // (renderMode = DontRender), so a visible foreground must stay animated and have
+        // every character made visible again (a disappearance may have hidden them).
+        animator.enabled = true;
+        animator.SetText(text, hideText: false);
+        animator.FirstVisibleCharacter = 0;
+        animator.MaxVisibleCharacters = text.Length;
+        animator.SetVisibilityEntireText(true, canPlayEffects: false);
     }
 
     // The regular (root) object holds the background text; its child holds the foreground text.
