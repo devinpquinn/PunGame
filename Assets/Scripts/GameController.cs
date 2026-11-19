@@ -41,6 +41,16 @@ public class GameController : MonoBehaviour
     [SerializeField] string revealBackEffectTag = "fade";
     [Tooltip("Delay between each step as the remaining text spreads outward from the selection. Set to 0 to reveal it all at once.")]
     [SerializeField] float revealBackPerCharDelay = 0.03f;
+    [Tooltip("Short sound played on each step as the remaining text spreads outward from the selection. Its pitch rises with each step. Leave unset for no sound.")]
+    [SerializeField] AudioClip revealStepClip;
+    [Tooltip("Volume of each reveal step sound.")]
+    [SerializeField, Range(0f, 1f)] float revealStepVolume = 0.5f;
+    [Tooltip("Pitch of the first reveal step, in semitones relative to the clip's original pitch.")]
+    [SerializeField] float revealStepStartSemitones = 0f;
+    [Tooltip("Total pitch rise, in semitones, from the first reveal step to the last (12 = one octave).")]
+    [SerializeField] float revealStepRiseSemitones = 12f;
+    [Tooltip("Snap each step's pitch to a major pentatonic scale for a melodic arpeggio. When off, the pitch glides smoothly.")]
+    [SerializeField] bool revealStepQuantizeToScale = true;
 
     [SerializeField] Button playButton;
     [SerializeField] GameObject buttonImage;
@@ -624,6 +634,7 @@ public class GameController : MonoBehaviour
             }
             if (!revealedAny) continue;
 
+            PlayRevealStepSound(d, maxDistance);
             deemphasizedPending = true;
 
             // Advance one spread step, easing the color toward default as time passes.
@@ -656,6 +667,34 @@ public class GameController : MonoBehaviour
             yield return null;
 
         onComplete?.Invoke();
+    }
+
+    static readonly int[] PentatonicSemitones = { 0, 2, 4, 7, 9 };
+
+    // Plays the reveal step sound for spread step 'step' (1-based) of 'totalSteps', with
+    // its pitch rising across the spread.
+    void PlayRevealStepSound(int step, int totalSteps)
+    {
+        if (revealStepClip == null) return;
+
+        float progress = totalSteps > 1 ? (step - 1) / (float)(totalSteps - 1) : 0f;
+        float semitones = progress * revealStepRiseSemitones;
+        if (revealStepQuantizeToScale)
+            semitones = SnapToPentatonic(semitones);
+
+        float pitch = Mathf.Pow(2f, (revealStepStartSemitones + semitones) / 12f);
+        SoundManager.PlayClip(revealStepClip, revealStepVolume, pitch);
+    }
+
+    // Rounds a semitone offset down to the nearest major pentatonic scale degree.
+    static float SnapToPentatonic(float semitones)
+    {
+        int octave = Mathf.FloorToInt(semitones / 12f);
+        float withinOctave = semitones - octave * 12f;
+        int degree = 0;
+        for (int i = 0; i < PentatonicSemitones.Length; i++)
+            if (PentatonicSemitones[i] <= withinOctave + 0.001f) degree = PentatonicSemitones[i];
+        return octave * 12f + degree;
     }
 
     void FinishResolve()

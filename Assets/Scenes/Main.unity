@@ -165,6 +165,11 @@ MonoBehaviour:
   correctSelectionEffectTag: correctSelectionEffect
   revealBackEffectTag: revealBackEffect
   revealBackPerCharDelay: 0.015
+  revealStepClip: {fileID: 8300000, guid: c8e11da5b22103b49ade6b14792cd2ce, type: 3}
+  revealStepVolume: 0.5
+  revealStepStartSemitones: 0
+  revealStepRiseSemitones: 12
+  revealStepQuantizeToScale: 1
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
   buttonImagePressed: {fileID: 1145401975}

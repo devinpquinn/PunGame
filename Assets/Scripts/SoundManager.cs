@@ -51,14 +51,27 @@ public class SoundManager : MonoBehaviour
             pitch = Random.Range(0.85f, 1.15f);
         }
 
+        Play(clip, (customVolume > 0) ? customVolume : volume, pitch, loop);
+    }
+
+    // Plays a clip directly through the output mixer group on its own AudioSource, so
+    // overlapping plays can each have their own pitch.
+    public static void PlayClip(AudioClip clip, float volume = 1f, float pitch = 1f)
+    {
+        if (clip == null) return;
+        Play(clip, volume, pitch, false);
+    }
+
+    static void Play(AudioClip clip, float volume, float pitch, bool loop)
+    {
         // Create a temporary GameObject with an AudioSource
-        GameObject soundObject = new GameObject("Sound_" + soundName);
+        GameObject soundObject = new GameObject("Sound_" + clip.name);
         AudioSource audioSource = soundObject.AddComponent<AudioSource>();
 
         // Configure the AudioSource
         audioSource.clip = clip;
         audioSource.outputAudioMixerGroup = s_outputMixerGroup;
-        audioSource.volume = (customVolume > 0) ? customVolume : volume;
+        audioSource.volume = volume;
         audioSource.pitch = pitch;
         audioSource.loop = loop;
 
@@ -68,7 +81,7 @@ public class SoundManager : MonoBehaviour
         // Clean up: destroy the GameObject after the clip finishes (unless looping)
         if (!loop)
         {
-            Destroy(soundObject, clip.length / pitch);
+            Destroy(soundObject, clip.length / Mathf.Abs(pitch));
         }
     }
 }
