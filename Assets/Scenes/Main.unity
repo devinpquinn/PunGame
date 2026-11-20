@@ -160,6 +160,8 @@ MonoBehaviour:
   selectionCrossfadeDuration: 0.1
   dragThreshold: 50
   correctSelectionColor: {r: 1, g: 0.5788235, b: 0.39999998, a: 1}
+  correctSelectionClip: {fileID: 8300000, guid: a492122f69b895040a2148b59908b411, type: 3}
+  correctSelectionVolume: 0.5
   selectedTextAnimator: {fileID: 574250880}
   selectionEffectTag: selectionEffect
   correctSelectionEffectTag: correctSelectionEffect

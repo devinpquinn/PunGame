@@ -30,6 +30,10 @@ public class GameController : MonoBehaviour
     [SerializeField] float dragThreshold = 8f;
     [Tooltip("Color of the selected text while a correct selection's audio plays.")]
     [SerializeField] Color correctSelectionColor = Color.green;
+    [Tooltip("Sound played as soon as the mouse is released on a correct selection.")]
+    [SerializeField] AudioClip correctSelectionClip;
+    [Tooltip("Volume of the correct selection sound.")]
+    [SerializeField, Range(0f, 1f)] float correctSelectionVolume = 0.5f;
 
     [Tooltip("Text Animator on the selected text, used to play an effect on a correct selection. If left unset, it is looked up on the selected text object.")]
     [SerializeField] TextAnimator_TMP selectedTextAnimator;
@@ -517,6 +521,7 @@ public class GameController : MonoBehaviour
             // Correct answer: keep the selection visible and resolve once the clip finishes.
             isSelecting = false;
             FadeOutSelectionBox();
+            SoundManager.PlayClip(correctSelectionClip, correctSelectionVolume);
             selectedText.color = correctSelectionColor;
             ApplyCorrectSelectionEffect();
 
