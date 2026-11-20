@@ -84,6 +84,20 @@ public class GameController : MonoBehaviour
     [SerializeField] string answerInEffectTag = "fade";
     [Tooltip("Delay between each character as a solved clue transitions out and its answer transitions in. Set to 0 to transition all characters at once.")]
     [SerializeField] float clueTransitionPerCharDelay = 0.03f;
+    [Tooltip("Short sounds played for each character as a solved clue transitions out and its answer transitions in. One is chosen at random per character (never the same clip twice in a row). The pitch falls as the clue animates out and rises as the answer animates in. Leave empty for no sound.")]
+    [SerializeField] List<AudioClip> clueTransitionClips = new List<AudioClip>();
+    [Tooltip("Volume of each clue transition sound.")]
+    [SerializeField, Range(0f, 1f)] float clueTransitionVolume = 0.5f;
+    [Tooltip("Pitch of the first clue-out sound, in semitones relative to the clip's original pitch.")]
+    [SerializeField] float clueOutStartSemitones = 0f;
+    [Tooltip("Total pitch fall, in semitones, from the first to the last clue character as it animates out (12 = one octave).")]
+    [SerializeField] float clueOutFallSemitones = 12f;
+    [Tooltip("Pitch of the first answer-in sound, in semitones relative to the clip's original pitch.")]
+    [SerializeField] float answerInStartSemitones = -12f;
+    [Tooltip("Total pitch rise, in semitones, from the first to the last answer character as it animates in (12 = one octave).")]
+    [SerializeField] float answerInRiseSemitones = 12f;
+    [Tooltip("Snap each clue transition sound's pitch to a major pentatonic scale for a melodic arpeggio. When off, the pitch glides smoothly.")]
+    [SerializeField] bool clueTransitionQuantizeToScale = true;
 
     Camera uiCamera;
     Color selectedTextDefaultColor;
@@ -525,13 +539,20 @@ public class GameController : MonoBehaviour
     {
         ClueRuntime rt = clueRuntimes[index];
         rt.solved = true;
-
-        StartCoroutine(TransitionClueToAnswer(rt));
-
-        // Animate the remaining (non-selected) characters back in before returning to the
-        // plain sentence view. The coroutine also eases the highlight color back to default.
         isResolving = true;
-        StartCoroutine(AnimateRemainingTextIn(FinishResolve));
+
+        // The selection stops its correct-selection effect but keeps its highlight color.
+        StopCorrectSelectionEffect();
+        StartCoroutine(ResolveClueRoutine(rt));
+    }
+
+    // Transitions the clue into its answer, then animates the remaining (non-selected)
+    // sentence characters back in before returning to the plain sentence view. The reveal
+    // also eases the highlight color back to default.
+    IEnumerator ResolveClueRoutine(ClueRuntime rt)
+    {
+        yield return TransitionClueToAnswer(rt);
+        yield return AnimateRemainingTextIn(FinishResolve);
     }
 
     // A solved clue transitions out to its de-emphasized text, then, once it has fully
@@ -539,8 +560,33 @@ public class GameController : MonoBehaviour
     // clue appears to flow into the answer.
     IEnumerator TransitionClueToAnswer(ClueRuntime rt)
     {
-        yield return TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag);
-        yield return TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag);
+        yield return TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag, clueOutStartSemitones, -clueOutFallSemitones);
+        yield return TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag, answerInStartSemitones, answerInRiseSemitones);
+    }
+
+    // Characters that pause the clue transition (and so get a sound): non-whitespace ones.
+    static int CountSoundSteps(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return 0;
+        int count = 0;
+        foreach (char c in text) if (!char.IsWhiteSpace(c)) count++;
+        return count;
+    }
+
+    // Plays a clue transition sound for step 'step' (0-based) of 'totalSteps', with its pitch
+    // moving from 'startSemitones' by 'deltaSemitones' (negative to fall) across the steps.
+    void PlayClueTransitionSound(int step, int totalSteps, float startSemitones, float deltaSemitones)
+    {
+        AudioClip clip = PickNonRepeatingClip(clueTransitionClips, ref lastClueTransitionClip);
+        if (clip == null) return;
+
+        float progress = totalSteps > 1 ? step / (float)(totalSteps - 1) : 0f;
+        float semitones = progress * deltaSemitones;
+        if (clueTransitionQuantizeToScale)
+            semitones = SnapToPentatonic(semitones);
+
+        float pitch = Mathf.Pow(2f, (startSemitones + semitones) / 12f);
+        SoundManager.PlayClip(clip, clueTransitionVolume, pitch);
     }
 
     // Swaps a clue/answer between its background and foreground text one character at a
@@ -549,7 +595,7 @@ public class GameController : MonoBehaviour
     // foreground, each character plays the effect's disappearance ({#tag}) while its
     // background counterpart is shown. This mirrors how the sentence's reveal-back effect
     // swaps characters between the selected and deemphasized texts.
-    IEnumerator TransitionClueText(TMP_Text background, TMP_Text foreground, string text, bool showForeground, string effectTag)
+    IEnumerator TransitionClueText(TMP_Text background, TMP_Text foreground, string text, bool showForeground, string effectTag, float soundStartSemitones, float soundDeltaSemitones)
     {
         text = text ?? string.Empty;
         TextAnimator_TMP animator = GetOrAddTextAnimator(foreground);
@@ -586,6 +632,10 @@ public class GameController : MonoBehaviour
         // Update), while the background TMP text rebuilds this frame. Each background change is
         // therefore deferred one frame so both texts change on the same rendered frame.
         int backgroundSynced = 0;
+        int soundStep = 0;
+        int soundTotalSteps = CountSoundSteps(text);
+        // With no per-character delay everything transitions at once, so play a single sound.
+        if (clueTransitionPerCharDelay <= 0f && n > 0) PlayClueTransitionSound(0, 1, soundStartSemitones, soundDeltaSemitones);
         for (int i = 0; i < n; i++)
         {
             animator.SetVisibilityChar(i, showForeground, canPlayEffects: true);
@@ -593,6 +643,7 @@ public class GameController : MonoBehaviour
             // Don't pause on whitespace, which has nothing to animate.
             if (clueTransitionPerCharDelay <= 0f || char.IsWhiteSpace(text[i])) continue;
 
+            PlayClueTransitionSound(soundStep++, soundTotalSteps, soundStartSemitones, soundDeltaSemitones);
             yield return null;
             backgroundSynced = SyncBackground(background, backgroundText, backgroundHidden, backgroundSynced, i + 1, showForeground);
 
@@ -758,6 +809,7 @@ public class GameController : MonoBehaviour
 
     AudioClip lastRevealStepClip;
     AudioClip lastCharSelectClip;
+    AudioClip lastClueTransitionClip;
 
     void PlayCharSelectSound()
     {
@@ -870,6 +922,15 @@ public class GameController : MonoBehaviour
         // The correct-selection effect (e.g. wave) is a continuous behavior: <tag>...</tag>.
         SetSelectedText(BuildMaskedSentence(hideSelected: false,
             BehaviorOpen(correctSelectionEffectTag), BehaviorClose(correctSelectionEffectTag)));
+    }
+
+    // Shows the selection without the correct-selection effect, leaving the animator
+    // enabled (disabling it would leave the text invisible) and the color unchanged.
+    void StopCorrectSelectionEffect()
+    {
+        if (selectedTextAnimator == null) return;
+
+        SetSelectedText(BuildMaskedSentence(hideSelected: false));
     }
 
     void ClearCorrectSelectionEffect()
