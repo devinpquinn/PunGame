@@ -98,6 +98,8 @@ public class GameController : MonoBehaviour
     [SerializeField] float answerInRiseSemitones = 12f;
     [Tooltip("Snap each clue transition sound's pitch to a major pentatonic scale for a melodic arpeggio. When off, the pitch glides smoothly.")]
     [SerializeField] bool clueTransitionQuantizeToScale = true;
+    [Tooltip("Seconds a solved answer takes to fade from the correct selection color back to its base color after it has fully animated in.")]
+    [SerializeField, Min(0f)] float answerHighlightFadeDuration = 0.3f;
 
     Camera uiCamera;
     Color selectedTextDefaultColor;
@@ -128,6 +130,7 @@ public class GameController : MonoBehaviour
         public TMP_Text clueForeground;
         public TMP_Text answerBackground;
         public TMP_Text answerForeground;
+        public Color answerForegroundBaseColor;
         public bool solved;
     }
 
@@ -206,6 +209,7 @@ public class GameController : MonoBehaviour
             {
                 GameObject go = Instantiate(answerPrefab, answerParent);
                 GetTexts(go, out rt.answerBackground, out rt.answerForeground);
+                if (rt.answerForeground != null) rt.answerForegroundBaseColor = rt.answerForeground.color;
                 SetText(rt.answerBackground, rt.answerForeground, Obfuscate(entry.answerText));
                 // An unsolved answer is de-emphasized.
                 SetEmphasis(rt.answerBackground, rt.answerForeground, emphasized: false);
@@ -244,6 +248,7 @@ public class GameController : MonoBehaviour
             rt.solved = false;
             ResetClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, emphasized: true);
             ResetClueText(rt.answerBackground, rt.answerForeground, Obfuscate(rt.data.answerText), emphasized: false);
+            if (rt.answerForeground != null) rt.answerForeground.color = rt.answerForegroundBaseColor;
         }
     }
 
@@ -561,7 +566,23 @@ public class GameController : MonoBehaviour
     IEnumerator TransitionClueToAnswer(ClueRuntime rt)
     {
         yield return TransitionClueText(rt.clueBackground, rt.clueForeground, rt.data.clueText, showForeground: false, clueOutEffectTag, clueOutStartSemitones, -clueOutFallSemitones);
+
+        // The answer holds the highlight color while it animates in, then fades back to its
+        // base color. The fade runs alongside the rest of the resolve sequence.
+        if (rt.answerForeground != null) rt.answerForeground.color = correctSelectionColor;
         yield return TransitionClueText(rt.answerBackground, rt.answerForeground, rt.data.answerText, showForeground: true, answerInEffectTag, answerInStartSemitones, answerInRiseSemitones);
+        if (rt.answerForeground != null)
+            StartCoroutine(FadeTextColor(rt.answerForeground, correctSelectionColor, rt.answerForegroundBaseColor, answerHighlightFadeDuration));
+    }
+
+    static IEnumerator FadeTextColor(TMP_Text text, Color from, Color to, float duration)
+    {
+        for (float elapsed = 0f; elapsed < duration; elapsed += Time.deltaTime)
+        {
+            text.color = Color.Lerp(from, to, Mathf.SmoothStep(0f, 1f, elapsed / duration));
+            yield return null;
+        }
+        text.color = to;
     }
 
     // Characters that pause the clue transition (and so get a sound): non-whitespace ones.
