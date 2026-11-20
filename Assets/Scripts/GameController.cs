@@ -66,6 +66,12 @@ public class GameController : MonoBehaviour
     [SerializeField] GameObject buttonImagePressed;
     [SerializeField] AudioSource sentenceAudioSource;
     [SerializeField] AudioClip sentenceClip;
+    [Tooltip("Sound played when the play button is pressed in.")]
+    [SerializeField] AudioClip playButtonPressClip;
+    [Tooltip("Sound played when the play button pops back out after the sentence audio finishes.")]
+    [SerializeField] AudioClip playButtonReleaseClip;
+    [Tooltip("Volume of the play button press and release sounds.")]
+    [SerializeField, Range(0f, 1f)] float playButtonSoundVolume = 0.5f;
 
     [Header("Puzzle")]
     [Tooltip("The puzzle to load. When set, overrides the sentence/clip above.")]
@@ -113,6 +119,7 @@ public class GameController : MonoBehaviour
     bool isPressPending;
     bool isSelecting;
     bool wasAudioPlaying;
+    bool playButtonReleaseSoundPending;
     bool isResolving;
     bool isFadingSelectionBox;
 
@@ -229,6 +236,7 @@ public class GameController : MonoBehaviour
 
         if (sentenceAudioSource != null) sentenceAudioSource.Stop();
         wasAudioPlaying = false;
+        playButtonReleaseSoundPending = false;
         pendingSolveIndex = -1;
         if (playButton != null) playButton.interactable = true;
         SetPlayButtonVisual(pressed: false);
@@ -335,7 +343,11 @@ public class GameController : MonoBehaviour
             ? sentenceClip
             : (sentenceAudioSource != null ? sentenceAudioSource.clip : null);
 
-        PlayClip(clip);
+        if (PlayClip(clip))
+        {
+            SoundManager.PlayClip(playButtonPressClip, playButtonSoundVolume);
+            playButtonReleaseSoundPending = true;
+        }
     }
 
     bool PlayClip(AudioClip clip)
@@ -370,6 +382,11 @@ public class GameController : MonoBehaviour
             wasAudioPlaying = false;
             if (playButton != null) playButton.interactable = true;
             SetPlayButtonVisual(pressed: false);
+            if (playButtonReleaseSoundPending)
+            {
+                playButtonReleaseSoundPending = false;
+                SoundManager.PlayClip(playButtonReleaseClip, playButtonSoundVolume);
+            }
 
             if (pendingSolveIndex >= 0)
             {
