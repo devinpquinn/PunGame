@@ -37,6 +37,8 @@ public class GameController : MonoBehaviour
     [SerializeField] string selectionEffectTag = "bounce";
     [Tooltip("Text Animator effect tag applied to a correct selection while its audio plays.")]
     [SerializeField] string correctSelectionEffectTag = "wave";
+    [Tooltip("Seconds the correct-selection effect takes to ease out (characters settle back to rest) once the answer audio finishes. Set to 0 to stop it instantly.")]
+    [SerializeField, Min(0f)] float correctSelectionEaseOutDuration = 0.35f;
     [Tooltip("Text Animator appearance effect tag used to animate the remaining (non-selected) characters back in after a correct selection's audio finishes. Should be an effect with an appearance (e.g. fade).")]
     [SerializeField] string revealBackEffectTag = "fade";
     [Tooltip("Delay between each step as the remaining text spreads outward from the selection. Set to 0 to reveal it all at once.")]
@@ -546,18 +548,55 @@ public class GameController : MonoBehaviour
         rt.solved = true;
         isResolving = true;
 
-        // The selection stops its correct-selection effect but keeps its highlight color.
-        StopCorrectSelectionEffect();
         StartCoroutine(ResolveClueRoutine(rt));
     }
 
-    // Transitions the clue into its answer, then animates the remaining (non-selected)
-    // sentence characters back in before returning to the plain sentence view. The reveal
-    // also eases the highlight color back to default.
+    // Eases out the correct-selection effect (keeping the highlight color), transitions the
+    // clue into its answer, then animates the remaining (non-selected) sentence characters
+    // back in before returning to the plain sentence view. The reveal also eases the
+    // highlight color back to default.
     IEnumerator ResolveClueRoutine(ClueRuntime rt)
     {
+        yield return EaseOutCorrectSelectionEffect();
+        StopCorrectSelectionEffect();
         yield return TransitionClueToAnswer(rt);
         yield return AnimateRemainingTextIn(FinishResolve);
+    }
+
+    // Text Animator can't scale a running effect's strength, so this blends each animated
+    // character's vertices back toward their resting positions (kept by TMP in its
+    // character info) over the ease-out duration. Coroutines resume after every Update, so
+    // this runs after the animator has written its mesh for the frame.
+    IEnumerator EaseOutCorrectSelectionEffect()
+    {
+        if (selectedTextAnimator == null || correctSelectionEaseOutDuration <= 0f) yield break;
+
+        for (float elapsed = 0f; elapsed < correctSelectionEaseOutDuration; elapsed += Time.deltaTime)
+        {
+            BlendSelectedTextTowardRest(Mathf.SmoothStep(0f, 1f, elapsed / correctSelectionEaseOutDuration));
+            yield return null;
+        }
+        BlendSelectedTextTowardRest(1f);
+    }
+
+    void BlendSelectedTextTowardRest(float t)
+    {
+        TMP_TextInfo textInfo = selectedText.textInfo;
+        if (textInfo == null) return;
+
+        for (int i = 0; i < textInfo.characterCount; i++)
+        {
+            TMP_CharacterInfo info = textInfo.characterInfo[i];
+            if (!info.isVisible) continue;
+
+            Vector3[] vertices = textInfo.meshInfo[info.materialReferenceIndex].vertices;
+            int v = info.vertexIndex;
+            vertices[v] = Vector3.Lerp(vertices[v], info.vertex_BL.position, t);
+            vertices[v + 1] = Vector3.Lerp(vertices[v + 1], info.vertex_TL.position, t);
+            vertices[v + 2] = Vector3.Lerp(vertices[v + 2], info.vertex_TR.position, t);
+            vertices[v + 3] = Vector3.Lerp(vertices[v + 3], info.vertex_BR.position, t);
+        }
+        selectedText.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices);
     }
 
     // A solved clue transitions out to its de-emphasized text, then, once it has fully
