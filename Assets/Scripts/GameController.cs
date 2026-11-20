@@ -52,6 +52,13 @@ public class GameController : MonoBehaviour
     [Tooltip("Snap each step's pitch to a major pentatonic scale for a melodic arpeggio. When off, the pitch glides smoothly.")]
     [SerializeField] bool revealStepQuantizeToScale = true;
 
+    [Tooltip("Sounds played when the selection box selects a character. One is chosen at random each time (never the same clip twice in a row). Leave empty for no sound.")]
+    [SerializeField] List<AudioClip> charSelectClips = new List<AudioClip>();
+    [Tooltip("Volume of the character select sound.")]
+    [SerializeField, Range(0f, 1f)] float charSelectVolume = 0.5f;
+    [Tooltip("Random pitch variation of the character select sound, in semitones up or down from the clip's original pitch.")]
+    [SerializeField, Min(0f)] float charSelectPitchVariationSemitones = 1f;
+
     [SerializeField] Button playButton;
     [SerializeField] GameObject buttonImage;
     [SerializeField] GameObject buttonImagePressed;
@@ -432,6 +439,7 @@ public class GameController : MonoBehaviour
             Mathf.Max(dragStart.x, screenPos.x), Mathf.Max(dragStart.y, screenPos.y));
 
         bool changed = false;
+        bool selectedAny = false;
         Transform textTransform = deemphasizedText.transform;
 
         for (int i = 0; i < charCenters.Length; i++)
@@ -451,9 +459,12 @@ public class GameController : MonoBehaviour
                         selectedTextAnimator.SetVisibilityChar(src, inside, canPlayEffects: inside);
                 }
                 changed = true;
+                if (inside) selectedAny = true;
             }
         }
 
+        // One sound per update, even if a fast drag selects several characters at once.
+        if (selectedAny) PlayCharSelectSound();
         if (changed) RebuildTexts();
         UpdateSelectionBoxVisual(screenPos);
     }
@@ -746,12 +757,22 @@ public class GameController : MonoBehaviour
     static readonly int[] PentatonicSemitones = { 0, 2, 4, 7, 9 };
 
     AudioClip lastRevealStepClip;
+    AudioClip lastCharSelectClip;
+
+    void PlayCharSelectSound()
+    {
+        AudioClip clip = PickNonRepeatingClip(charSelectClips, ref lastCharSelectClip);
+        if (clip == null) return;
+
+        float semitones = Random.Range(-charSelectPitchVariationSemitones, charSelectPitchVariationSemitones);
+        SoundManager.PlayClip(clip, charSelectVolume, Mathf.Pow(2f, semitones / 12f));
+    }
 
     // Plays the reveal step sound for spread step 'step' (1-based) of 'totalSteps', with
     // its pitch rising across the spread.
     void PlayRevealStepSound(int step, int totalSteps)
     {
-        AudioClip clip = PickRevealStepClip();
+        AudioClip clip = PickNonRepeatingClip(revealStepClips, ref lastRevealStepClip);
         if (clip == null) return;
 
         float progress = totalSteps > 1 ? (step - 1) / (float)(totalSteps - 1) : 0f;
@@ -763,24 +784,25 @@ public class GameController : MonoBehaviour
         SoundManager.PlayClip(clip, revealStepVolume, pitch);
     }
 
-    // Picks a random non-null reveal step clip, avoiding the one played last when possible.
-    AudioClip PickRevealStepClip()
+    // Picks a random non-null clip from 'clips', avoiding 'last' when possible, and
+    // records the pick in 'last'.
+    static AudioClip PickNonRepeatingClip(List<AudioClip> clips, ref AudioClip last)
     {
-        if (revealStepClips == null) return null;
+        if (clips == null) return null;
 
         int candidateCount = 0;
-        for (int i = 0; i < revealStepClips.Count; i++)
-            if (revealStepClips[i] != null && revealStepClips[i] != lastRevealStepClip) candidateCount++;
+        for (int i = 0; i < clips.Count; i++)
+            if (clips[i] != null && clips[i] != last) candidateCount++;
 
         // Only one distinct clip is available, so repeating it is unavoidable.
-        if (candidateCount == 0) return lastRevealStepClip != null && revealStepClips.Contains(lastRevealStepClip) ? lastRevealStepClip : null;
+        if (candidateCount == 0) return last != null && clips.Contains(last) ? last : null;
 
         int pick = Random.Range(0, candidateCount);
-        for (int i = 0; i < revealStepClips.Count; i++)
+        for (int i = 0; i < clips.Count; i++)
         {
-            AudioClip c = revealStepClips[i];
-            if (c == null || c == lastRevealStepClip) continue;
-            if (pick-- == 0) { lastRevealStepClip = c; return c; }
+            AudioClip c = clips[i];
+            if (c == null || c == last) continue;
+            if (pick-- == 0) { last = c; return c; }
         }
         return null;
     }

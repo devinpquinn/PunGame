@@ -169,10 +169,16 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 90dba24f578b3c040ae3c74fad4e07a5, type: 3}
   - {fileID: 8300000, guid: 753ff260331d1194c874f79a657cde1c, type: 3}
   - {fileID: 8300000, guid: f9cb937ac4f3c9f43ad16febd1a76d2a, type: 3}
-  revealStepVolume: 0.5
+  revealStepVolume: 0.3
   revealStepStartSemitones: 0
   revealStepRiseSemitones: 12
   revealStepQuantizeToScale: 1
+  charSelectClips:
+  - {fileID: 8300000, guid: 90dba24f578b3c040ae3c74fad4e07a5, type: 3}
+  - {fileID: 8300000, guid: 753ff260331d1194c874f79a657cde1c, type: 3}
+  - {fileID: 8300000, guid: f9cb937ac4f3c9f43ad16febd1a76d2a, type: 3}
+  charSelectVolume: 0.1
+  charSelectPitchVariationSemitones: 1
   playButton: {fileID: 918983700}
   buttonImage: {fileID: 1680549785}
   buttonImagePressed: {fileID: 1145401975}
