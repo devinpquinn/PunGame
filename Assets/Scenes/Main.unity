@@ -191,10 +191,10 @@ MonoBehaviour:
   answerPrefab: {fileID: 6637308505401377425, guid: 5de6dbd4cc7d00c4888f2e5aa1a9c32a, type: 3}
   clueOutEffectTag: clueAnswerEffect
   answerInEffectTag: clueAnswerEffect
-  clueTransitionPerCharDelay: 0.015
+  clueTransitionPerCharDelay: 0.02
   clueTransitionClips:
   - {fileID: 8300000, guid: c8e11da5b22103b49ade6b14792cd2ce, type: 3}
-  clueTransitionVolume: 0.1
+  clueTransitionVolume: 0.2
   clueOutStartSemitones: 0
   clueOutFallSemitones: 12
   answerInStartSemitones: -12
