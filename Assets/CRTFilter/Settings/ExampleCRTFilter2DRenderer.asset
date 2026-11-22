@@ -80,8 +80,8 @@ MonoBehaviour:
   pixelResolutionY: 210
   screenBend: 6.5
   screenOverscan: 0.5
-  vignetteSize: 5.7
-  vignetteSmooth: 2.8
+  vignetteSize: 5.5
+  vignetteSmooth: 10
   vignetteRound: 70
   blur: 0.8
   bleed: 0
