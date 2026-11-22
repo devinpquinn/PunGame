@@ -175,7 +175,7 @@ MonoBehaviour:
   revealStepVolume: 0.3
   revealStepStartSemitones: 0
   revealStepRiseSemitones: 12
-  revealStepQuantizeToScale: 1
+  revealStepQuantizeToScale: 0
   charSelectClips:
   - {fileID: 8300000, guid: 90dba24f578b3c040ae3c74fad4e07a5, type: 3}
   - {fileID: 8300000, guid: 753ff260331d1194c874f79a657cde1c, type: 3}
@@ -205,7 +205,7 @@ MonoBehaviour:
   clueOutFallSemitones: 12
   answerInStartSemitones: -12
   answerInRiseSemitones: 12
-  clueTransitionQuantizeToScale: 1
+  clueTransitionQuantizeToScale: 0
   answerHighlightFadeDuration: 0.3
 --- !u!4 &161459912
 Transform:
